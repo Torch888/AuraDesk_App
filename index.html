@@ -5,245 +5,1139 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AuraDesk</title>
   <style>
+    :root {
+      --avatar-scale: 0.82;
+      --cream: #fffaf5;
+      --cream-2: #fff1df;
+      --pink: #ff9cc7;
+      --pink-soft: #ffe4f1;
+      --rose: #ff72ab;
+      --purple: #b99aea;
+      --purple-deep: #8265c8;
+      --mint: #b9f3dd;
+      --text: #70546a;
+      --shadow: rgba(139, 88, 142, 0.17);
+    }
+
+    * { box-sizing: border-box; }
+
     body {
       margin: 0;
       padding: 0;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
       background: transparent;
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", sans-serif;
-      overflow: hidden;
+      color: var(--text);
       user-select: none;
     }
 
-    /* 拖拽区域：按住这里可以拖动数字人 */
     .drag-area {
       -webkit-app-region: drag;
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
-      height: 50px;
-      z-index: 10;
+      height: 42px;
+      z-index: 99;
     }
 
-    .container {
+    .app {
+      width: 100%;
+      height: 100%;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding-top: 40px;
-    }
-
-    /* 数字人本体 */
-    .pet {
-      width: 120px;
-      height: 120px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #00c6ff, #0072ff);
-      box-shadow: 0 10px 30px rgba(0, 114, 255, 0.4);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      animation: breathe 4s infinite ease-in-out;
-      position: relative;
-    }
-
-    .pet::before {
-      content: "";
-      width: 40px;
-      height: 20px;
-      background: white;
-      border-radius: 50%;
-      box-shadow: 0 0 15px white;
-    }
-
-    .pet::after {
-      content: "";
-      position: absolute;
-      width: 88px;
-      height: 88px;
-      border: 2px dashed rgba(255, 255, 255, 0.35);
-      border-radius: 50%;
-      animation: rotate 10s linear infinite;
-    }
-
-    /* 说话时的动画 */
-    .pet.speaking {
-      animation: speak 0.5s infinite alternate;
-      background: linear-gradient(135deg, #ff416c, #ff4b2b);
-      box-shadow: 0 10px 35px rgba(255, 65, 108, 0.45);
-    }
-
-    /* 气泡弹窗 */
-    .bubble {
-      background: rgba(255, 255, 255, 0.95);
-      color: #333;
-      padding: 12px 16px;
-      border-radius: 16px;
-      margin-top: 20px;
-      font-size: 14px;
-      max-width: 240px;
-      text-align: center;
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-      opacity: 0;
-      transform: translateY(10px);
-      transition: all 0.3s ease;
-      line-height: 1.5;
+      justify-content: flex-start;
+      padding-top: 22px;
       pointer-events: none;
     }
 
-    .bubble.show {
+    .top-tools {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      display: flex;
+      gap: 5px;
+      z-index: 120;
+      -webkit-app-region: no-drag;
+      opacity: 0;
+      transform: translateY(-6px) scale(.96);
+      transition: opacity .18s ease, transform .18s ease;
+      pointer-events: none;
+    }
+
+    body.controls-visible .top-tools {
       opacity: 1;
-      transform: translateY(0);
+      transform: translateY(0) scale(1);
+      pointer-events: auto;
     }
 
-    @keyframes breathe {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.05); }
+    .tool-btn {
+      width: 28px;
+      height: 26px;
+      border: 0;
+      border-radius: 999px;
+      color: #7c5872;
+      background: rgba(255, 250, 253, 0.9);
+      box-shadow: 0 5px 12px rgba(145, 83, 128, 0.14);
+      cursor: pointer;
+      font-size: 13px;
+      line-height: 26px;
+      padding: 0;
     }
 
-    @keyframes speak {
-      0% { transform: scale(1) rotate(-2deg); }
-      100% { transform: scale(1.1) rotate(2deg); }
+    .open-chip {
+      position: absolute;
+      right: 10px;
+      bottom: 10px;
+      border: 0;
+      border-radius: 999px;
+      padding: 8px 13px;
+      color: #784f6b;
+      background: rgba(255, 246, 251, 0.94);
+      box-shadow: 0 8px 18px rgba(145, 83, 128, 0.16);
+      display: none;
+      pointer-events: auto;
+      -webkit-app-region: no-drag;
+      cursor: pointer;
     }
 
-    @keyframes rotate {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
+    body.collapsed .bubble,
+    body.collapsed .panel,
+    body.collapsed .top-tools { display: none; }
+    body.collapsed .open-chip { display: block; }
+    body.collapsed .app { padding-top: 86px; }
+
+    .stage {
+      position: relative;
+      width: 210px;
+      height: 198px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: auto;
+      transform: scale(var(--avatar-scale));
+      transform-origin: center top;
+      transition: transform 0.22s ease;
+      filter: drop-shadow(0 18px 24px var(--shadow));
+      cursor: grab;
+      -webkit-app-region: no-drag;
     }
+
+    .stage.dragging {
+      cursor: grabbing;
+    }
+
+    .glow {
+      position: absolute;
+      bottom: 15px;
+      width: 155px;
+      height: 42px;
+      border-radius: 999px;
+      background: radial-gradient(circle, rgba(255, 160, 203, 0.45), rgba(255,255,255,0));
+      animation: glow 3.4s ease-in-out infinite;
+    }
+
+    .soft-star {
+      position: absolute;
+      width: 9px;
+      height: 9px;
+      background: rgba(255,255,255,.96);
+      clip-path: polygon(50% 0%, 61% 38%, 100% 50%, 61% 62%, 50% 100%, 39% 62%, 0% 50%, 39% 38%);
+      animation: twinkle 2.8s ease-in-out infinite;
+    }
+    .soft-star.a { left: 24px; top: 62px; }
+    .soft-star.b { right: 22px; top: 88px; animation-delay: .6s; }
+    .soft-star.c { left: 66px; top: 26px; animation-delay: 1.2s; }
+
+    /* B 方案：更圆、更软的 Q 版小精灵/小熊助手 */
+    .avatar {
+      position: relative;
+      width: 164px;
+      height: 168px;
+      animation: float 4s ease-in-out infinite;
+      transform-origin: center bottom;
+    }
+
+    .body {
+      position: absolute;
+      left: 20px;
+      top: 24px;
+      width: 124px;
+      height: 128px;
+      border-radius: 54% 54% 48% 48%;
+      background:
+        radial-gradient(circle at 34% 26%, #fffefa 0 18%, var(--cream) 19% 58%, var(--cream-2) 100%);
+      box-shadow:
+        inset -8px -10px 0 rgba(255, 198, 174, .22),
+        inset 7px 8px 0 rgba(255, 255, 255, .62);
+      z-index: 4;
+    }
+
+    .ear {
+      position: absolute;
+      top: 10px;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: linear-gradient(145deg, #fffdf8, #ffe8d6);
+      box-shadow: inset -4px -5px 0 rgba(255, 193, 166, .22);
+      z-index: 2;
+    }
+    .ear.left { left: 18px; }
+    .ear.right { right: 18px; }
+    .ear::after {
+      content: "";
+      position: absolute;
+      inset: 12px;
+      border-radius: 50%;
+      background: linear-gradient(145deg, #ffd8e9, #ffadd0);
+      opacity: .78;
+    }
+
+    .cap {
+      position: absolute;
+      left: 45px;
+      top: 0;
+      width: 74px;
+      height: 48px;
+      border-radius: 44px 44px 28px 28px;
+      background: linear-gradient(145deg, #d7c2ff, var(--purple), var(--purple-deep));
+      box-shadow: inset -5px -6px 0 rgba(91, 68, 161, .16);
+      z-index: 5;
+    }
+    .cap::before,
+    .cap::after {
+      content: "";
+      position: absolute;
+      bottom: -10px;
+      width: 25px;
+      height: 27px;
+      border-radius: 50%;
+      background: linear-gradient(145deg, #d7c2ff, var(--purple));
+    }
+    .cap::before { left: 7px; transform: rotate(8deg); }
+    .cap::after { right: 7px; transform: rotate(-8deg); }
+
+    .flower {
+      position: absolute;
+      right: 41px;
+      top: 23px;
+      width: 24px;
+      height: 24px;
+      z-index: 9;
+    }
+    .flower span,
+    .flower::before,
+    .flower::after {
+      content: "";
+      position: absolute;
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      background: #ff9fc8;
+    }
+    .flower span { left: 6px; top: 6px; background: #ffd86d; width: 10px; height: 10px; z-index: 2; }
+    .flower::before { left: 0; top: 5px; box-shadow: 10px -8px 0 #ff9fc8, 15px 5px 0 #ff9fc8, 5px 14px 0 #ff9fc8; }
+
+    .face-mask {
+      position: absolute;
+      left: 32px;
+      top: 52px;
+      width: 100px;
+      height: 78px;
+      border-radius: 50% 50% 46% 46%;
+      background: rgba(255,255,255,.32);
+      z-index: 6;
+      pointer-events: none;
+    }
+
+    .eye {
+      position: absolute;
+      top: 78px;
+      width: 15px;
+      height: 21px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 25%, #fff 0 12%, #805eac 13% 42%, #44305e 43% 100%);
+      z-index: 7;
+      animation: blink 5.2s infinite;
+    }
+    .eye.left { left: 56px; }
+    .eye.right { right: 56px; }
+    .eye::after {
+      content: "";
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: white;
+    }
+
+    .blush {
+      position: absolute;
+      top: 102px;
+      width: 22px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(255, 136, 174, .34);
+      filter: blur(.2px);
+      z-index: 7;
+    }
+    .blush.left { left: 35px; }
+    .blush.right { right: 35px; }
+
+    .mouth {
+      position: absolute;
+      left: 76px;
+      top: 102px;
+      width: 13px;
+      height: 7px;
+      border: 2px solid #b7657d;
+      border-top: 0;
+      border-radius: 0 0 14px 14px;
+      transform-origin: center top;
+      z-index: 7;
+    }
+
+    .paw {
+      position: absolute;
+      top: 110px;
+      width: 32px;
+      height: 30px;
+      border-radius: 50%;
+      background: linear-gradient(145deg, #fffefa, #ffe4d5);
+      box-shadow: inset -3px -4px 0 rgba(255, 193, 166, .20);
+      z-index: 8;
+    }
+    .paw.left { left: 22px; transform: rotate(12deg); }
+    .paw.right { right: 22px; transform: rotate(-12deg); }
+    .paw::after {
+      content: "";
+      position: absolute;
+      left: 9px;
+      top: 8px;
+      width: 14px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(255, 163, 199, .58);
+    }
+
+    .feet {
+      position: absolute;
+      bottom: 5px;
+      width: 38px;
+      height: 24px;
+      border-radius: 50%;
+      background: linear-gradient(145deg, #fffefa, #ffe4d5);
+      box-shadow: inset -3px -4px 0 rgba(255, 193, 166, .18);
+      z-index: 3;
+    }
+    .feet.left { left: 37px; transform: rotate(-8deg); }
+    .feet.right { right: 37px; transform: rotate(8deg); }
+
+    .tail {
+      position: absolute;
+      right: 12px;
+      top: 96px;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: linear-gradient(145deg, #fffefa, #ffe4d5);
+      box-shadow: inset -4px -4px 0 rgba(255, 193, 166, .18);
+      z-index: 1;
+      animation: tailWiggle 1.8s ease-in-out infinite;
+      transform-origin: left center;
+    }
+
+    .status-mark {
+      position: absolute;
+      right: 11px;
+      top: 30px;
+      min-width: 31px;
+      height: 31px;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,.9);
+      box-shadow: 0 8px 18px rgba(119, 72, 129, .14);
+      opacity: 0;
+      transform: translateY(8px) scale(.9);
+      transition: .24s ease;
+      z-index: 20;
+      font-size: 17px;
+    }
+
+    .avatar.theme-bear .cap {
+      background: linear-gradient(145deg, #d7c2ff, var(--purple), var(--purple-deep));
+    }
+
+    .avatar.theme-bunny .ear {
+      top: -6px;
+      width: 34px;
+      height: 76px;
+      border-radius: 50% 50% 45% 45%;
+    }
+    .avatar.theme-bunny .ear.left { left: 31px; transform: rotate(-15deg); }
+    .avatar.theme-bunny .ear.right { right: 31px; transform: rotate(15deg); }
+    .avatar.theme-bunny .ear::after { inset: 11px 9px 16px; border-radius: 50%; background: linear-gradient(145deg, #ffd7ea, #ff9bc6); }
+    .avatar.theme-bunny .cap { background: linear-gradient(145deg, #ffd0e4, #ff9ec9, #ff72ab); }
+    .avatar.theme-bunny .tail { width: 34px; height: 34px; right: 16px; background: #fff; }
+    .avatar.theme-bunny .body { background: radial-gradient(circle at 34% 26%, #ffffff 0 18%, #fff7fb 19% 58%, #ffe5f0 100%); }
+
+    .avatar.theme-cat .ear {
+      top: 14px;
+      width: 44px;
+      height: 44px;
+      border-radius: 10px 80% 10px 80%;
+      background: linear-gradient(145deg, #fffaf0, #ffdba8);
+    }
+    .avatar.theme-cat .ear.left { left: 22px; transform: rotate(22deg); }
+    .avatar.theme-cat .ear.right { right: 22px; transform: scaleX(-1) rotate(22deg); }
+    .avatar.theme-cat .ear::after { inset: 12px; border-radius: 8px 70% 8px 70%; background: #ffc5d9; }
+    .avatar.theme-cat .cap { background: linear-gradient(145deg, #ffe2a9, #ffc468, #ffa84f); }
+    .avatar.theme-cat .body { background: radial-gradient(circle at 34% 26%, #fffef7 0 18%, #fff3dc 19% 58%, #ffd99d 100%); }
+    .avatar.theme-cat .tail { width: 48px; height: 22px; right: 5px; top: 108px; border-radius: 999px; background: linear-gradient(145deg, #fff4dc, #ffc56f); }
+
+    .avatar.theme-cloud .ear {
+      top: 18px;
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(145deg, #f2fffb, #c9f5e8);
+    }
+    .avatar.theme-cloud .cap { background: linear-gradient(145deg, #c7fff0, #9debd5, #76d6bd); }
+    .avatar.theme-cloud .body { background: radial-gradient(circle at 34% 26%, #ffffff 0 18%, #f5fffc 19% 58%, #d8fbef 100%); }
+    .avatar.theme-cloud .flower::before { background: #9ee9d4; box-shadow: 10px -8px 0 #9ee9d4, 15px 5px 0 #9ee9d4, 5px 14px 0 #9ee9d4; }
+    .avatar.theme-cloud .flower span { background: #fff6a8; }
+    .avatar.theme-cloud .tail { background: linear-gradient(145deg, #ffffff, #d8fbef); }
+
+    /* 简化萌版：减少装饰线条，只保留圆身体、耳朵、眼睛、腮红、小嘴和小爪 */
+    .avatar.simple-cute .cap,
+    .avatar.simple-cute .flower,
+    .avatar.simple-cute .face-mask,
+    .avatar.simple-cute .feet,
+    .avatar.simple-cute .tail {
+      display: none;
+    }
+
+    .avatar.simple-cute .body {
+      left: 18px;
+      top: 28px;
+      width: 128px;
+      height: 132px;
+      border-radius: 58% 58% 52% 52%;
+      box-shadow:
+        inset -7px -9px 0 rgba(255, 198, 174, .18),
+        inset 7px 8px 0 rgba(255, 255, 255, .72),
+        0 10px 22px rgba(139, 88, 142, .10);
+    }
+
+    .avatar.simple-cute .ear {
+      top: 17px;
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      box-shadow: inset -3px -4px 0 rgba(255, 193, 166, .16);
+    }
+    .avatar.simple-cute .ear.left { left: 20px; transform: rotate(-6deg); }
+    .avatar.simple-cute .ear.right { right: 20px; transform: rotate(6deg); }
+    .avatar.simple-cute .ear::after {
+      inset: 13px;
+      opacity: .66;
+    }
+
+    .avatar.simple-cute .eye {
+      top: 78px;
+      width: 16px;
+      height: 22px;
+    }
+    .avatar.simple-cute .eye.left { left: 55px; }
+    .avatar.simple-cute .eye.right { right: 55px; }
+
+    .avatar.simple-cute .blush {
+      top: 103px;
+      width: 24px;
+      height: 11px;
+      opacity: .88;
+    }
+    .avatar.simple-cute .blush.left { left: 33px; }
+    .avatar.simple-cute .blush.right { right: 33px; }
+
+    .avatar.simple-cute .mouth {
+      left: 75px;
+      top: 103px;
+      width: 14px;
+      height: 8px;
+      border-width: 2px;
+    }
+
+    .avatar.simple-cute .paw {
+      top: 118px;
+      width: 27px;
+      height: 24px;
+      border-radius: 50%;
+      box-shadow: inset -2px -3px 0 rgba(255, 193, 166, .15);
+    }
+    .avatar.simple-cute .paw.left { left: 27px; transform: rotate(10deg); }
+    .avatar.simple-cute .paw.right { right: 27px; transform: rotate(-10deg); }
+    .avatar.simple-cute .paw::after {
+      left: 8px;
+      top: 7px;
+      width: 11px;
+      height: 8px;
+      opacity: .68;
+    }
+
+    .avatar.simple-cute.theme-bunny .ear {
+      top: 0;
+      width: 34px;
+      height: 68px;
+      border-radius: 50% 50% 42% 42%;
+    }
+    .avatar.simple-cute.theme-bunny .ear.left { left: 34px; transform: rotate(-12deg); }
+    .avatar.simple-cute.theme-bunny .ear.right { right: 34px; transform: rotate(12deg); }
+
+    .avatar.simple-cute.theme-cat .ear {
+      top: 21px;
+      width: 42px;
+      height: 42px;
+      border-radius: 10px 80% 10px 80%;
+    }
+
+    .avatar.simple-cute.theme-cloud .ear {
+      background: linear-gradient(145deg, #f2fffb, #c9f5e8);
+    }
+
+    .avatar.simple-cute.speaking .mouth {
+      left: 74px;
+      top: 100px;
+    }
+    .avatar.simple-cute.happy .eye {
+      top: 86px;
+      height: 8px;
+    }
+    .avatar.simple-cute.happy .mouth {
+      left: 72px;
+      width: 20px;
+      height: 12px;
+    }
+    .avatar.simple-cute.sleeping .eye {
+      top: 86px;
+      height: 7px;
+    }
+
+    .bubble {
+      max-width: 264px;
+      min-height: 42px;
+      margin-top: -10px;
+      padding: 12px 15px;
+      border-radius: 20px 20px 20px 8px;
+      color: var(--text);
+      background: rgba(255, 250, 253, .95);
+      border: 1px solid rgba(255, 180, 214, .58);
+      box-shadow: 0 12px 25px rgba(119, 72, 129, .14);
+      font-size: 13px;
+      line-height: 1.55;
+      opacity: 0;
+      transform: translateY(8px) scale(.98);
+      transition: .25s ease;
+      pointer-events: none;
+    }
+    .bubble.show { opacity: 1; transform: translateY(0) scale(1); }
+
+    .panel {
+      width: 276px;
+      margin-top: 8px;
+      padding: 9px;
+      border-radius: 18px;
+      background: rgba(255, 250, 253, .78);
+      border: 1px solid rgba(255, 186, 218, .58);
+      box-shadow: 0 10px 24px rgba(119, 72, 129, .12);
+      pointer-events: auto;
+      -webkit-app-region: no-drag;
+      display: none;
+      opacity: 0;
+      transform: translateY(6px) scale(.98);
+      transition: opacity .18s ease, transform .18s ease;
+    }
+
+    .panel.show {
+      display: block;
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    .row { display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; }
+    button, select, input { -webkit-app-region: no-drag; }
+    button {
+      border: 0;
+      border-radius: 999px;
+      padding: 7px 10px;
+      font-size: 12px;
+      color: #745168;
+      background: linear-gradient(135deg, #fff9fc, #ffe0ee);
+      box-shadow: 0 4px 10px rgba(255, 120, 180, .14);
+      cursor: pointer;
+    }
+    button:hover { transform: translateY(-1px); filter: brightness(1.02); }
+
+    .settings {
+      display: none;
+      margin-top: 9px;
+      padding-top: 8px;
+      border-top: 1px dashed rgba(255, 154, 199, .55);
+      font-size: 12px;
+    }
+    .settings.show { display: block; }
+    .setting-line {
+      display: grid;
+      grid-template-columns: 48px 1fr 38px;
+      gap: 7px;
+      align-items: center;
+      margin: 6px 0;
+    }
+    .setting-line.full { grid-template-columns: 48px 1fr; }
+    select {
+      width: 100%;
+      border: 1px solid #ffd2e5;
+      border-radius: 10px;
+      background: #fffafd;
+      color: #735366;
+      padding: 5px;
+      font-size: 12px;
+    }
+    input[type="range"] { width: 100%; accent-color: var(--rose); }
+
+    .avatar.speaking { animation: speakingBody .52s ease-in-out infinite alternate; }
+    .avatar.speaking .mouth {
+      border: 0;
+      left: 74px;
+      top: 99px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 50% 35%, #ff9cbd, #a43b5b 72%);
+      animation: mouthTalk .16s ease-in-out infinite alternate;
+    }
+    .avatar.speaking .paw.left { animation: pawWave .38s ease-in-out infinite alternate; }
+    .avatar.speaking .paw.right { animation: pawWaveRight .42s ease-in-out infinite alternate; }
+    .avatar.speaking .status-mark { opacity: 1; transform: translateY(0) scale(1); }
+    .avatar.speaking .status-mark::before { content: "♪"; color: var(--rose); }
+
+    .avatar.happy { animation: happyFloat 1.15s ease-in-out infinite; }
+    .avatar.happy .eye {
+      top: 85px; height: 8px; background: transparent;
+      border-bottom: 4px solid #493161; border-radius: 0 0 18px 18px;
+      animation: none;
+    }
+    .avatar.happy .mouth { left: 72px; width: 20px; height: 12px; border-width: 3px; }
+    .avatar.happy .status-mark { opacity: 1; transform: translateY(0) scale(1); }
+    .avatar.happy .status-mark::before { content: "♡"; color: var(--rose); }
+
+    .avatar.thinking { animation: thinking .95s ease-in-out infinite alternate; }
+    .avatar.thinking .status-mark { opacity: 1; transform: translateY(0) scale(1); }
+    .avatar.thinking .status-mark::before { content: "…"; color: var(--purple-deep); }
+
+    .avatar.alert { animation: alert .7s ease-in-out infinite; }
+    .avatar.alert .status-mark { opacity: 1; transform: translateY(0) scale(1); background: #fff4ca; }
+    .avatar.alert .status-mark::before { content: "!"; color: #ff8c3a; font-weight: 800; }
+
+    .avatar.sleeping { animation: sleep 4.2s ease-in-out infinite; filter: saturate(.75) brightness(.94); }
+    .avatar.sleeping .eye {
+      top: 85px; height: 7px; background: transparent;
+      border-bottom: 3px solid #493161; border-radius: 0 0 16px 16px;
+      animation: none;
+    }
+    .avatar.sleeping .status-mark { opacity: 1; transform: translateY(0) scale(1); }
+    .avatar.sleeping .status-mark::before { content: "Zz"; color: var(--purple-deep); font-size: 13px; }
+
+    @keyframes float { 0%,100%{ transform: translateY(0) rotate(0deg); } 50%{ transform: translateY(-7px) rotate(.4deg); } }
+    @keyframes glow { 0%,100%{ opacity:.55; transform:scale(.94); } 50%{ opacity:.95; transform:scale(1.07); } }
+    @keyframes blink { 0%,91%,100%{ transform:scaleY(1); } 94%{ transform:scaleY(.08); } }
+    @keyframes twinkle { 0%,100%{ opacity:.42; transform:scale(.8) rotate(0deg); } 50%{ opacity:1; transform:scale(1.2) rotate(18deg); } }
+    @keyframes tailWiggle { 0%,100%{ transform: rotate(0deg); } 50%{ transform: rotate(12deg); } }
+    @keyframes speakingBody { from{ transform: translateY(-2px) rotate(-.8deg); } to{ transform: translateY(-7px) rotate(.8deg); } }
+    @keyframes mouthTalk { from{ transform: scaleY(.55) scaleX(1.12); } to{ transform: scaleY(1.15) scaleX(.9); } }
+    @keyframes pawWave { from{ transform: rotate(12deg) translateY(0); } to{ transform: rotate(24deg) translateY(-5px); } }
+    @keyframes pawWaveRight { from{ transform: rotate(-12deg) translateY(0); } to{ transform: rotate(-24deg) translateY(-5px); } }
+    @keyframes happyFloat { 0%,100%{ transform: translateY(0) scale(1); } 45%{ transform: translateY(-10px) scale(1.025); } }
+    @keyframes thinking { from{ transform: translateY(-3px) rotate(-1.7deg); } to{ transform: translateY(-7px) rotate(1.7deg); } }
+    @keyframes alert { 0%,100%{ transform: translateY(0) scale(1); } 50%{ transform: translateY(-9px) scale(1.035); } }
+    @keyframes sleep { 0%,100%{ transform: translateY(0) rotate(-.4deg); } 50%{ transform: translateY(-5px) rotate(.4deg); } }
   </style>
 </head>
 <body>
   <div class="drag-area"></div>
+  <div class="top-tools">
+    <button class="tool-btn" onclick="changeAvatarSize(-0.06)" title="缩小">－</button>
+    <button class="tool-btn" onclick="changeAvatarSize(0.06)" title="放大">＋</button>
+    <button class="tool-btn" onclick="toggleSettings()" title="设置">⚙</button>
+    <button class="tool-btn" onclick="closeInterface()" title="收起界面">×</button>
+  </div>
+  <button class="open-chip" onclick="openInterface()">打开 AuraDesk</button>
 
-  <div class="container">
-    <div class="pet" id="petAvatar"></div>
-    <div class="bubble" id="msgBubble">正在初始化系统权限...</div>
+  <div class="app">
+    <div class="stage" id="stage" title="点击我试试">
+      <div class="glow"></div>
+      <div class="soft-star a"></div>
+      <div class="soft-star b"></div>
+      <div class="soft-star c"></div>
+      <div class="avatar idle theme-bear" id="avatar">
+        <div class="status-mark"></div>
+        <div class="tail"></div>
+        <div class="ear left"></div>
+        <div class="ear right"></div>
+        <div class="body"></div>
+        <div class="cap"></div>
+        <div class="flower"><span></span></div>
+        <div class="face-mask"></div>
+        <div class="eye left"></div>
+        <div class="eye right"></div>
+        <div class="blush left"></div>
+        <div class="blush right"></div>
+        <div class="mouth"></div>
+        <div class="paw left"></div>
+        <div class="paw right"></div>
+        <div class="feet left"></div>
+        <div class="feet right"></div>
+      </div>
+    </div>
+
+    <div class="bubble" id="bubble">我变成软软的小精灵啦，今天也会陪着你。</div>
+
+    <div class="panel" id="panel">
+      <div class="row">
+        <button onclick="demoSpeak('greeting')">问候</button>
+        <button onclick="demoSpeak('meeting')">会议</button>
+        <button onclick="demoSpeak('ticket')">抢票</button>
+        <button onclick="demoSpeak('rest')">休息</button>
+        <button onclick="demoSpeak('encouragement')">鼓励</button>
+        <button onclick="toggleSettings()">设置</button>
+      </div>
+      <div class="settings" id="settingsPanel">
+        <div class="setting-line full">
+          <label>音色</label>
+          <select id="voiceSelect"></select>
+        </div>
+        <div class="setting-line">
+          <label>大小</label>
+          <input id="sizeRange" type="range" min="0.55" max="1.08" step="0.01" />
+          <span id="sizeValue">0.82</span>
+        </div>
+        <div class="setting-line">
+          <label>语速</label>
+          <input id="rateRange" type="range" min="0.86" max="1.18" step="0.01" />
+          <span id="rateValue">1.00</span>
+        </div>
+        <div class="setting-line">
+          <label>音调</label>
+          <input id="pitchRange" type="range" min="1.02" max="1.35" step="0.01" />
+          <span id="pitchValue">1.16</span>
+        </div>
+        <div class="setting-line">
+          <label>音量</label>
+          <input id="volumeRange" type="range" min="0" max="1" step="0.01" />
+          <span id="volumeValue">0.92</span>
+        </div>
+        <div class="row">
+          <button onclick="toggleVoiceEnabled()" id="voiceToggleBtn">语音：开</button>
+          <button onclick="previewVoice()">试听</button>
+          <button onclick="resetAvatarSize()">默认大小</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script>
-    const pet = document.getElementById('petAvatar');
-    const bubble = document.getElementById('msgBubble');
-    let lastPatrolSpeakAt = 0;
+    const avatar = document.getElementById('avatar');
+    const bubble = document.getElementById('bubble');
+    const settingsPanel = document.getElementById('settingsPanel');
+    const voiceSelect = document.getElementById('voiceSelect');
+    const sizeRange = document.getElementById('sizeRange');
+    const rateRange = document.getElementById('rateRange');
+    const pitchRange = document.getElementById('pitchRange');
+    const volumeRange = document.getElementById('volumeRange');
+    const sizeValue = document.getElementById('sizeValue');
+    const rateValue = document.getElementById('rateValue');
+    const pitchValue = document.getElementById('pitchValue');
+    const volumeValue = document.getElementById('volumeValue');
+    const voiceToggleBtn = document.getElementById('voiceToggleBtn');
+
     let availableVoices = [];
     let selectedVoice = null;
+    let hideBubbleTimer = null;
 
-    // 尽量选择更像“小女孩 / 动漫卡通”的中文女声音色。
-    // 注意：浏览器 speechSynthesis 只能使用系统已安装的语音，真实音色取决于 macOS / Chrome 当前可用语音。
+    const voiceSettings = JSON.parse(localStorage.getItem('auraVoiceSettings') || 'null') || {
+      enabled: true,
+      voiceName: 'auto',
+      rate: 1.0,
+      pitch: 1.16,
+      volume: 0.92,
+      avatarScale: 0.82,
+      avatarTheme: 'bear'
+    };
+
+    if (voiceSettings.avatarScale === undefined) voiceSettings.avatarScale = 0.82;
+    if (!voiceSettings.avatarTheme) voiceSettings.avatarTheme = 'bear';
+
+    const avatarThemes = [
+      { key: 'bear', name: '奶油小熊' },
+      { key: 'bunny', name: '粉兔精灵' },
+      { key: 'cat', name: '橘猫助手' },
+      { key: 'cloud', name: '云朵团子' }
+    ];
+
+    const messages = {
+      greeting: [
+        '我在这里呀，今天也会软软地陪着你。',
+        '你好呀，我会轻轻地帮你记住重要事情。',
+        '早呀，今天也一起慢慢来，不着急。',
+        '我来啦，有需要的时候叫我就好。',
+        '今天也辛苦啦，我会在旁边陪着你。',
+        '嗨，我的小主人，今天想先做哪件事呢？',
+        '我已经准备好啦，会帮你留意重要安排。',
+        '见到你真开心，我们一起把今天过好吧。',
+        '今天也要对自己温柔一点哦。',
+        '我会安静陪着你，也会在重要时候提醒你。'
+      ],
+      meeting: [
+        '小提醒来啦，会议快开始了，记得提前准备哦。',
+        '等一下有会议，我已经帮你记着啦。',
+        '会议时间快到啦，要不要先整理一下资料？',
+        '有个会议快开始了，深呼吸一下，我们从容一点。',
+        '会议提醒到啦，别忘了带上你的好状态。',
+        '马上要开会啦，我陪你一起准时开始。'
+      ],
+      ticket: [
+        '重要提醒，抢票时间快到啦，准备好了吗？',
+        '演唱会门票马上开抢啦，我陪你一起盯着。',
+        '抢票提醒来啦，可以先打开页面准备哦。',
+        '关键时刻快到啦，祝你这次顺顺利利抢到票。'
+      ],
+      rest: [
+        '你已经忙了一会儿啦，要不要喝口水？',
+        '休息一下吧，眼睛也需要被照顾哦。',
+        '可以稍微伸个懒腰，让身体放松一下。',
+        '慢一点也没关系，先照顾好自己。',
+        '已经很努力啦，给自己一分钟喘口气吧。',
+        '喝点水吧，我会继续帮你看着时间。'
+      ],
+      complete: [
+        '做得很好呀，辛苦啦！',
+        '完成啦，我为你开心。',
+        '你真的很棒，又完成了一件事。',
+        '太好啦，这一步已经完成了。',
+        '辛苦你啦，给自己一个小小奖励吧。',
+        '今天的你也很认真，我看见啦。',
+        '做得漂亮，我们继续慢慢前进。',
+        '你比刚才又多完成了一点点，真的很棒。',
+        '这件事完成得很好，夸夸你。',
+        '不用完美也没关系，你已经很努力了。',
+        '我就知道你可以的，真的很厉害。',
+        '完成一件事就是进步，值得开心一下。'
+      ],
+      encouragement: [
+        '别担心，我们一步一步来就好。',
+        '你已经做得很好了，不需要一下子做到完美。',
+        '慢慢来，我会陪着你。',
+        '如果累了，可以先停一下，你的感受也很重要。',
+        '你不是一个人在处理这些，我会一直在这里。',
+        '先做最小的一步，也算是很棒的开始。',
+        '今天能坚持到现在，已经值得被夸奖了。',
+        '没关系，状态有起伏也很正常。',
+        '你可以的，我们把事情拆小一点。',
+        '不要太责怪自己，温柔一点也可以完成事情。'
+      ]
+    };
+
+    function pickMessage(type = 'greeting') {
+      const list = messages[type] || messages.greeting;
+      return list[Math.floor(Math.random() * list.length)];
+    }
+
+    function saveSettings() {
+      localStorage.setItem('auraVoiceSettings', JSON.stringify(voiceSettings));
+    }
+
+    function applyAvatarSize() {
+      const scale = Math.max(0.55, Math.min(1.08, Number(voiceSettings.avatarScale || 0.82)));
+      voiceSettings.avatarScale = scale;
+      document.documentElement.style.setProperty('--avatar-scale', scale);
+      sizeRange.value = scale;
+      sizeValue.textContent = scale.toFixed(2);
+      saveSettings();
+    }
+
+    function changeAvatarSize(delta) {
+      voiceSettings.avatarScale = Number((Number(voiceSettings.avatarScale) + delta).toFixed(2));
+      applyAvatarSize();
+    }
+
+    function resetAvatarSize() {
+      voiceSettings.avatarScale = 0.82;
+      applyAvatarSize();
+    }
+
+    function setAvatarState(state = 'idle') {
+      const theme = voiceSettings.avatarTheme || 'bear';
+      avatar.className = `avatar ${state} theme-${theme}`;
+    }
+
+    function setAvatarTheme(themeKey, shouldSpeak = false) {
+      const exists = avatarThemes.some(item => item.key === themeKey);
+      voiceSettings.avatarTheme = exists ? themeKey : 'bear';
+      saveSettings();
+      setAvatarState('happy');
+      const current = avatarThemes.find(item => item.key === voiceSettings.avatarTheme);
+      if (shouldSpeak) {
+        speakAndShow(`已切换成${current.name}啦。`, { state: 'happy' });
+      }
+    }
+
+    function nextAvatarTheme() {
+      const currentIndex = avatarThemes.findIndex(item => item.key === voiceSettings.avatarTheme);
+      const next = avatarThemes[(currentIndex + 1 + avatarThemes.length) % avatarThemes.length];
+      setAvatarTheme(next.key, true);
+    }
+
+    function showBubble(text) {
+      clearTimeout(hideBubbleTimer);
+      bubble.innerText = text;
+      bubble.classList.add('show');
+    }
+
+    function hideBubble(delay = 2500) {
+      clearTimeout(hideBubbleTimer);
+      hideBubbleTimer = setTimeout(() => bubble.classList.remove('show'), delay);
+    }
+
+    function closeInterface() {
+      document.body.classList.add('collapsed');
+      bubble.classList.remove('show');
+    }
+
+    function openInterface() {
+      document.body.classList.remove('collapsed');
+      speakAndShow('我回来啦，需要我帮你提醒什么吗？', { state: 'happy' });
+    }
+
+    function toggleSettings() {
+      const panel = document.getElementById('panel');
+      const willShow = !panel.classList.contains('show');
+      panel.classList.toggle('show', willShow);
+      settingsPanel.classList.toggle('show', willShow);
+      document.body.classList.toggle('controls-visible', true);
+    }
+
+    function syncSettingsUI() {
+      applyAvatarSize();
+      rateRange.value = voiceSettings.rate;
+      pitchRange.value = voiceSettings.pitch;
+      volumeRange.value = voiceSettings.volume;
+      rateValue.textContent = Number(voiceSettings.rate).toFixed(2);
+      pitchValue.textContent = Number(voiceSettings.pitch).toFixed(2);
+      volumeValue.textContent = Number(voiceSettings.volume).toFixed(2);
+      voiceToggleBtn.textContent = voiceSettings.enabled ? '语音：开' : '语音：关';
+    }
+
+    function normalizeText(text) {
+      return String(text).replace(/[~～]+/g, '，').replace(/\s+/g, ' ').trim();
+    }
+
     function loadVoices() {
       if (!('speechSynthesis' in window)) return;
-
       availableVoices = window.speechSynthesis.getVoices();
+      fillVoiceOptions();
+      selectBestVoice();
+    }
 
-      // 这次不用系统默认的“婷婷/美佳”优先，改用 macOS 新一点的 Sandy 中文声音。
-      // Sandy 通常比传统中文语音更柔和；如果没有 Sandy，就依次尝试 Flo、Shelley、Tingting。
-      const preferredVoiceNames = [
-        'Sandy (中文（中国大陆）)',
-        'Sandy (中文（台湾）)',
-        'Flo (中文（中国大陆）)',
-        'Flo (中文（台湾）)',
-        'Shelley (中文（中国大陆）)',
-        'Shelley (中文（台湾）)',
-        'Tingting',
-        'Meijia',
-        'Sinji'
-      ];
+    function fillVoiceOptions() {
+      const current = voiceSettings.voiceName || 'auto';
+      voiceSelect.innerHTML = '<option value="auto">自动选择甜美中文音</option>';
+      availableVoices
+        .filter(v => /zh|cmn|yue|Chinese|中文/i.test(`${v.lang} ${v.name}`))
+        .forEach(v => {
+          const option = document.createElement('option');
+          option.value = v.name;
+          option.textContent = `${v.name} / ${v.lang}`;
+          voiceSelect.appendChild(option);
+        });
+      voiceSelect.value = current;
+    }
 
-      selectedVoice = preferredVoiceNames
-        .map(name => availableVoices.find(voice => voice.name === name || voice.name.includes(name)))
-        .find(Boolean)
-        || availableVoices.find(voice => /zh|cmn|yue/i.test(voice.lang))
+    function selectBestVoice() {
+      if (!availableVoices.length) return;
+      if (voiceSettings.voiceName && voiceSettings.voiceName !== 'auto') {
+        selectedVoice = availableVoices.find(v => v.name === voiceSettings.voiceName) || null;
+        if (selectedVoice) return;
+      }
+      const preferred = ['Sandy', 'Flo', 'Shelley', '婷婷', 'Tingting', '美佳', 'Meijia', '晓晓', 'Xiaoxiao', 'Xiaoyi'];
+      selectedVoice = preferred.map(name => availableVoices.find(v => v.name.includes(name))).find(Boolean)
+        || availableVoices.find(v => /zh|cmn|yue/i.test(v.lang))
+        || availableVoices[0]
         || null;
     }
+
+    function speak(text, options = {}) {
+      const finalText = normalizeText(text);
+      if (!voiceSettings.enabled || !('speechSynthesis' in window)) {
+        setTimeout(() => { setAvatarState(options.afterState || 'idle'); hideBubble(2200); }, 1600);
+        return;
+      }
+      window.speechSynthesis.cancel();
+      loadVoices();
+      const u = new SpeechSynthesisUtterance(finalText);
+      u.lang = 'zh-CN';
+      u.rate = Number(voiceSettings.rate);
+      u.pitch = Number(voiceSettings.pitch);
+      u.volume = Number(voiceSettings.volume);
+      if (selectedVoice) {
+        u.voice = selectedVoice;
+        u.lang = selectedVoice.lang || 'zh-CN';
+      }
+      u.onstart = () => setAvatarState('speaking');
+      u.onend = () => { setAvatarState(options.afterState || 'idle'); hideBubble(2500); };
+      u.onerror = () => { setAvatarState(options.afterState || 'idle'); hideBubble(2500); };
+      setTimeout(() => window.speechSynthesis.speak(u), 80);
+    }
+
+    function speakAndShow(text, options = {}) {
+      setAvatarState(options.state || 'happy');
+      showBubble(text);
+      speak(text, { afterState: options.afterState || 'idle' });
+    }
+
+    function demoSpeak(type) {
+      const stateMap = { greeting: 'happy', meeting: 'alert', ticket: 'alert', rest: 'thinking', complete: 'happy', encouragement: 'happy' };
+      speakAndShow(pickMessage(type), { state: stateMap[type] || 'happy' });
+    }
+
+    function previewVoice() {
+      speakAndShow('你好呀，我是 AuraDesk，我会用甜甜的声音，软软地陪着你。', { state: 'happy' });
+    }
+
+    function toggleVoiceEnabled() {
+      voiceSettings.enabled = !voiceSettings.enabled;
+      saveSettings();
+      syncSettingsUI();
+      if (voiceSettings.enabled) previewVoice();
+    }
+
+    function bindSettings() {
+      sizeRange.addEventListener('input', () => { voiceSettings.avatarScale = Number(sizeRange.value); applyAvatarSize(); });
+      rateRange.addEventListener('input', () => { voiceSettings.rate = Number(rateRange.value); saveSettings(); syncSettingsUI(); });
+      pitchRange.addEventListener('input', () => { voiceSettings.pitch = Number(pitchRange.value); saveSettings(); syncSettingsUI(); });
+      volumeRange.addEventListener('input', () => { voiceSettings.volume = Number(volumeRange.value); saveSettings(); syncSettingsUI(); });
+      voiceSelect.addEventListener('change', () => { voiceSettings.voiceName = voiceSelect.value; saveSettings(); selectBestVoice(); });
+    }
+
+    const stage = document.getElementById('stage');
+    const panel = document.getElementById('panel');
+    const topTools = document.querySelector('.top-tools');
+    let controlsHideTimer = null;
+    let draggingAvatar = false;
+    let movedDuringDrag = false;
+    let dragStartPoint = { x: 0, y: 0 };
+
+    function sendDragEvent(channel) {
+      try {
+        if (window.require) {
+          const { ipcRenderer } = window.require('electron');
+          ipcRenderer.send(channel);
+        }
+      } catch (error) {
+        console.warn('拖动窗口通信失败：', error);
+      }
+    }
+
+    function showControls() {
+      clearTimeout(controlsHideTimer);
+      document.body.classList.add('controls-visible');
+    }
+
+    function hideControlsLater() {
+      clearTimeout(controlsHideTimer);
+      controlsHideTimer = setTimeout(() => {
+        if (!panel.classList.contains('show') && !draggingAvatar) {
+          document.body.classList.remove('controls-visible');
+        }
+      }, 650);
+    }
+
+    stage.addEventListener('mouseenter', showControls);
+    stage.addEventListener('mouseleave', hideControlsLater);
+    topTools.addEventListener('mouseenter', showControls);
+    topTools.addEventListener('mouseleave', hideControlsLater);
+
+    stage.addEventListener('mousedown', (event) => {
+      if (event.button !== 0 || event.detail >= 2) return;
+      draggingAvatar = true;
+      movedDuringDrag = false;
+      dragStartPoint = { x: event.screenX, y: event.screenY };
+      stage.classList.add('dragging');
+      showControls();
+      sendDragEvent('avatar-drag-start');
+    });
+
+    window.addEventListener('mousemove', (event) => {
+      if (!draggingAvatar) return;
+      const distance = Math.abs(event.screenX - dragStartPoint.x) + Math.abs(event.screenY - dragStartPoint.y);
+      if (distance > 6) movedDuringDrag = true;
+    });
+
+    window.addEventListener('mouseup', () => {
+      if (!draggingAvatar) return;
+      draggingAvatar = false;
+      stage.classList.remove('dragging');
+      sendDragEvent('avatar-drag-stop');
+      hideControlsLater();
+    });
+
+    stage.addEventListener('click', () => {
+      if (movedDuringDrag) return;
+      demoSpeak('complete');
+    });
+
+    stage.addEventListener('dblclick', (event) => {
+      event.preventDefault();
+      movedDuringDrag = true;
+      nextAvatarTheme();
+    });
 
     if ('speechSynthesis' in window) {
       loadVoices();
       window.speechSynthesis.onvoiceschanged = loadVoices;
+      setTimeout(loadVoices, 300);
+      setTimeout(loadVoices, 1000);
     }
 
-    // 语音播报与 UI 联动
-    function speakAndShow(text) {
-      bubble.innerText = text;
-      bubble.classList.add('show');
-      pet.classList.add('speaking');
+    bindSettings();
+    syncSettingsUI();
+    setAvatarTheme(voiceSettings.avatarTheme || 'bear', false);
 
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-        loadVoices();
-
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'zh-CN';
-
-        if (selectedVoice) {
-          utterance.voice = selectedVoice;
-          utterance.lang = selectedVoice.lang || 'zh-CN';
-        }
-
-        // 更自然一点：不要拉得太尖，语速也别太快。
-        // 如果想更卡通，可以把 pitch 改到 1.35；如果想更自然，保持 1.15 左右。
-        utterance.rate = 1.02;
-        utterance.pitch = 1.18;
-        utterance.volume = 0.95;
-
-        utterance.onstart = () => {
-          console.log('AuraDesk 使用语音：', selectedVoice ? `${selectedVoice.name} / ${selectedVoice.lang}` : '系统默认语音');
-        };
-
-        utterance.onend = () => {
-          pet.classList.remove('speaking');
-          setTimeout(() => bubble.classList.remove('show'), 3000);
-        };
-
-        utterance.onerror = () => {
-          pet.classList.remove('speaking');
-          setTimeout(() => bubble.classList.remove('show'), 3000);
-        };
-
-        window.speechSynthesis.speak(utterance);
-      } else {
-        setTimeout(() => {
-          pet.classList.remove('speaking');
-          bubble.classList.remove('show');
-        }, 3000);
-      }
-    }
-
-    // 后台自动巡检系统，当前是演示版逻辑
-    function autoPatrol() {
-      const now = new Date();
-      const hour = now.getHours();
-      const minute = now.getMinutes();
-      const timeStr = `${hour}点${minute}分`;
-
-      // 防止短时间重复播报太频繁
-      if (Date.now() - lastPatrolSpeakAt < 12000) return;
-
-      // 模拟获取系统日历/软件授权后的数据整理
-      // 实际开发中，这里可以通过 Electron IPC 调用主进程读取日历、提醒事项或本地数据库
-      const mockSchedule = [
-        { time: 10, event: '产品需求评审会议' },
-        { time: 15, event: '跟进大客户合同进度' },
-        { time: 18, event: '去菜鸟驿站取快递' }
-      ];
-
-      if (minute === 0 && hour >= 7 && hour <= 10) {
-        lastPatrolSpeakAt = Date.now();
-        speakAndShow(`早上好！现在是${timeStr}。今天您有 ${mockSchedule.length} 项重要日程，请保持专注！`);
-      } else if (minute === 30) {
-        lastPatrolSpeakAt = Date.now();
-        speakAndShow(`现在是${timeStr}，您已经盯着屏幕很久了，请站起来喝杯水，活动一下颈椎吧！`);
-      } else if (Math.random() > 0.7) {
-        const randomEvent = mockSchedule[Math.floor(Math.random() * mockSchedule.length)];
-        lastPatrolSpeakAt = Date.now();
-        speakAndShow(`系统巡检完毕。温馨提示：今天 ${randomEvent.time}点 有【${randomEvent.event}】，请提前准备。`);
-      }
-    }
-
-    // 启动应用时的问候
     setTimeout(() => {
-      speakAndShow('AuraDesk 系统级悬浮已就绪。我正在后台为您监控日程与时间。');
-    }, 1000);
+      speakAndShow('我变成软软的小精灵啦，今天也会陪着你。', { state: 'happy' });
+    }, 700);
 
-    // 每 15 秒在后台静默巡检一次系统时间与日程，实际应用中可调整为分钟级
-    setInterval(autoPatrol, 15000);
+    window.AuraDeskAvatar = {
+      setAvatarState,
+      showBubble,
+      hideBubble,
+      speak,
+      speakAndShow,
+      pickMessage,
+      previewVoice,
+      changeAvatarSize,
+      setAvatarTheme,
+      nextAvatarTheme,
+      closeInterface,
+      openInterface,
+      getVoiceSettings: () => ({ ...voiceSettings })
+    };
   </script>
 </body>
 </html>
