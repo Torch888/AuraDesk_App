@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AuraDesk</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", sans-serif;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    /* 拖拽区域：按住这里可以拖动数字人 */
+    .drag-area {
+      -webkit-app-region: drag;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 50px;
+      z-index: 10;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 40px;
+    }
+
+    /* 数字人本体 */
+    .pet {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #00c6ff, #0072ff);
+      box-shadow: 0 10px 30px rgba(0, 114, 255, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: breathe 4s infinite ease-in-out;
+      position: relative;
+    }
+
+    .pet::before {
+      content: "";
+      width: 40px;
+      height: 20px;
+      background: white;
+      border-radius: 50%;
+      box-shadow: 0 0 15px white;
+    }
+
+    .pet::after {
+      content: "";
+      position: absolute;
+      width: 88px;
+      height: 88px;
+      border: 2px dashed rgba(255, 255, 255, 0.35);
+      border-radius: 50%;
+      animation: rotate 10s linear infinite;
+    }
+
+    /* 说话时的动画 */
+    .pet.speaking {
+      animation: speak 0.5s infinite alternate;
+      background: linear-gradient(135deg, #ff416c, #ff4b2b);
+      box-shadow: 0 10px 35px rgba(255, 65, 108, 0.45);
+    }
+
+    /* 气泡弹窗 */
+    .bubble {
+      background: rgba(255, 255, 255, 0.95);
+      color: #333;
+      padding: 12px 16px;
+      border-radius: 16px;
+      margin-top: 20px;
+      font-size: 14px;
+      max-width: 240px;
+      text-align: center;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.3s ease;
+      line-height: 1.5;
+      pointer-events: none;
+    }
+
+    .bubble.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @keyframes breathe {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    @keyframes speak {
+      0% { transform: scale(1) rotate(-2deg); }
+      100% { transform: scale(1.1) rotate(2deg); }
+    }
+
+    @keyframes rotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="drag-area"></div>
+
+  <div class="container">
+    <div class="pet" id="petAvatar"></div>
+    <div class="bubble" id="msgBubble">正在初始化系统权限...</div>
+  </div>
+
+  <script>
+    const pet = document.getElementById('petAvatar');
+    const bubble = document.getElementById('msgBubble');
+    let lastPatrolSpeakAt = 0;
+    let availableVoices = [];
+    let selectedVoice = null;
+
+    // 尽量选择更像“小女孩 / 动漫卡通”的中文女声音色。
+    // 注意：浏览器 speechSynthesis 只能使用系统已安装的语音，真实音色取决于 macOS / Chrome 当前可用语音。
+    function loadVoices() {
+      if (!('speechSynthesis' in window)) return;
+
+      availableVoices = window.speechSynthesis.getVoices();
+
+      // 这次不用系统默认的“婷婷/美佳”优先，改用 macOS 新一点的 Sandy 中文声音。
+      // Sandy 通常比传统中文语音更柔和；如果没有 Sandy，就依次尝试 Flo、Shelley、Tingting。
+      const preferredVoiceNames = [
+        'Sandy (中文（中国大陆）)',
+        'Sandy (中文（台湾）)',
+        'Flo (中文（中国大陆）)',
+        'Flo (中文（台湾）)',
+        'Shelley (中文（中国大陆）)',
+        'Shelley (中文（台湾）)',
+        'Tingting',
+        'Meijia',
+        'Sinji'
+      ];
+
+      selectedVoice = preferredVoiceNames
+        .map(name => availableVoices.find(voice => voice.name === name || voice.name.includes(name)))
+        .find(Boolean)
+        || availableVoices.find(voice => /zh|cmn|yue/i.test(voice.lang))
+        || null;
+    }
+
+    if ('speechSynthesis' in window) {
+      loadVoices();
+      window.speechSynthesis.onvoiceschanged = loadVoices;
+    }
+
+    // 语音播报与 UI 联动
+    function speakAndShow(text) {
+      bubble.innerText = text;
+      bubble.classList.add('show');
+      pet.classList.add('speaking');
+
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        loadVoices();
+
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'zh-CN';
+
+        if (selectedVoice) {
+          utterance.voice = selectedVoice;
+          utterance.lang = selectedVoice.lang || 'zh-CN';
+        }
+
+        // 更自然一点：不要拉得太尖，语速也别太快。
+        // 如果想更卡通，可以把 pitch 改到 1.35；如果想更自然，保持 1.15 左右。
+        utterance.rate = 1.02;
+        utterance.pitch = 1.18;
+        utterance.volume = 0.95;
+
+        utterance.onstart = () => {
+          console.log('AuraDesk 使用语音：', selectedVoice ? `${selectedVoice.name} / ${selectedVoice.lang}` : '系统默认语音');
+        };
+
+        utterance.onend = () => {
+          pet.classList.remove('speaking');
+          setTimeout(() => bubble.classList.remove('show'), 3000);
+        };
+
+        utterance.onerror = () => {
+          pet.classList.remove('speaking');
+          setTimeout(() => bubble.classList.remove('show'), 3000);
+        };
+
+        window.speechSynthesis.speak(utterance);
+      } else {
+        setTimeout(() => {
+          pet.classList.remove('speaking');
+          bubble.classList.remove('show');
+        }, 3000);
+      }
+    }
+
+    // 后台自动巡检系统，当前是演示版逻辑
+    function autoPatrol() {
+      const now = new Date();
+      const hour = now.getHours();
+      const minute = now.getMinutes();
+      const timeStr = `${hour}点${minute}分`;
+
+      // 防止短时间重复播报太频繁
+      if (Date.now() - lastPatrolSpeakAt < 12000) return;
+
+      // 模拟获取系统日历/软件授权后的数据整理
+      // 实际开发中，这里可以通过 Electron IPC 调用主进程读取日历、提醒事项或本地数据库
+      const mockSchedule = [
+        { time: 10, event: '产品需求评审会议' },
+        { time: 15, event: '跟进大客户合同进度' },
+        { time: 18, event: '去菜鸟驿站取快递' }
+      ];
+
+      if (minute === 0 && hour >= 7 && hour <= 10) {
+        lastPatrolSpeakAt = Date.now();
+        speakAndShow(`早上好！现在是${timeStr}。今天您有 ${mockSchedule.length} 项重要日程，请保持专注！`);
+      } else if (minute === 30) {
+        lastPatrolSpeakAt = Date.now();
+        speakAndShow(`现在是${timeStr}，您已经盯着屏幕很久了，请站起来喝杯水，活动一下颈椎吧！`);
+      } else if (Math.random() > 0.7) {
+        const randomEvent = mockSchedule[Math.floor(Math.random() * mockSchedule.length)];
+        lastPatrolSpeakAt = Date.now();
+        speakAndShow(`系统巡检完毕。温馨提示：今天 ${randomEvent.time}点 有【${randomEvent.event}】，请提前准备。`);
+      }
+    }
+
+    // 启动应用时的问候
+    setTimeout(() => {
+      speakAndShow('AuraDesk 系统级悬浮已就绪。我正在后台为您监控日程与时间。');
+    }, 1000);
+
+    // 每 15 秒在后台静默巡检一次系统时间与日程，实际应用中可调整为分钟级
+    setInterval(autoPatrol, 15000);
+  </script>
+</body>
+</html>
