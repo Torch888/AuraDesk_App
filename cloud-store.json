@@ -1,0 +1,79 @@
+{
+  "devices": {
+    "desktop-jiangjundeMac-mini.local": {
+      "deviceId": "desktop-jiangjundeMac-mini.local",
+      "name": "AuraDesk Desktop jiangjundeMac-mini.local",
+      "platform": "darwin",
+      "lastSeenAt": "2026-05-25T02:37:43.526Z"
+    }
+  },
+  "reminders": [
+    {
+      "id": "c1922348-97bc-434d-afbc-3aa9f52861dd",
+      "title": "云端测试提醒",
+      "time": "",
+      "type": "普通",
+      "note": "",
+      "done": false,
+      "source": "test",
+      "createdAt": "2026-05-25T02:28:09.044Z",
+      "updatedAt": "2026-05-25T02:28:09.044Z"
+    }
+  ],
+  "capturedNotifications": [
+    {
+      "id": "4d3be5d2-b385-4d3b-b0ab-b865e9137af1",
+      "deviceId": "android-test",
+      "appName": "测试App",
+      "packageName": "com.test",
+      "title": "测试通知",
+      "text": "这条来自通知监听骨架",
+      "postTime": 1779676089046,
+      "createdAt": "2026-05-25T02:28:09.046Z"
+    }
+  ],
+  "events": [
+    {
+      "id": "ea20905a-784c-405a-85e7-93290f4e24e0",
+      "type": "device.registered",
+      "payload": {
+        "deviceId": "desktop-jiangjundeMac-mini.local",
+        "name": "AuraDesk Desktop jiangjundeMac-mini.local",
+        "platform": "darwin",
+        "lastSeenAt": "2026-05-25T02:37:43.526Z"
+      },
+      "createdAt": "2026-05-25T02:37:43.527Z"
+    },
+    {
+      "id": "0b442f5c-2d32-4d8c-96f8-62856cf6fdf7",
+      "type": "notification.captured",
+      "payload": {
+        "id": "4d3be5d2-b385-4d3b-b0ab-b865e9137af1",
+        "deviceId": "android-test",
+        "appName": "测试App",
+        "packageName": "com.test",
+        "title": "测试通知",
+        "text": "这条来自通知监听骨架",
+        "postTime": 1779676089046,
+        "createdAt": "2026-05-25T02:28:09.046Z"
+      },
+      "createdAt": "2026-05-25T02:28:09.046Z"
+    },
+    {
+      "id": "4f363ca0-6dce-4c03-8ccb-009afa77959d",
+      "type": "reminder.created",
+      "payload": {
+        "id": "c1922348-97bc-434d-afbc-3aa9f52861dd",
+        "title": "云端测试提醒",
+        "time": "",
+        "type": "普通",
+        "note": "",
+        "done": false,
+        "source": "test",
+        "createdAt": "2026-05-25T02:28:09.044Z",
+        "updatedAt": "2026-05-25T02:28:09.044Z"
+      },
+      "createdAt": "2026-05-25T02:28:09.044Z"
+    }
+  ]
+}

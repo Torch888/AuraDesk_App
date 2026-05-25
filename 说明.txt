@@ -1,0 +1,14 @@
+AuraDesk 相关数据文件说明
+
+1. reminders.json
+   桌面端 AuraDesk 本地提醒数据。
+   原始位置：/Users/tt/Library/Application Support/auradesk_app/reminders.json
+
+2. cloud-store.json
+   云端后端测试数据，包括设备、云端提醒、通知捕获、事件记录。
+   原始位置：/Users/tt/Desktop/AuraDesk_数字人视觉与语音模块/cloud-data/store.json
+
+3. CLOUD_SETUP.md
+   云端模式/内网穿透/手机端配置说明。
+
+注意：这些是数据/配置说明文件，不是 APK 安装包。
