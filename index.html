@@ -25,7 +25,7 @@
       margin: 0;
       padding: 0;
       width: 100vw;
-      height: 100vh;
+      min-height: 100vh;
       overflow: hidden;
       background: transparent;
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", sans-serif;
@@ -45,12 +45,13 @@
 
     .app {
       width: 100%;
-      height: 100%;
+      height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: flex-start;
-      padding-top: 22px;
+      padding-top: 18px;
+      padding-bottom: 18px;
       pointer-events: none;
     }
 
@@ -108,7 +109,7 @@
     body.collapsed .panel,
     body.collapsed .top-tools { display: none; }
     body.collapsed .open-chip { display: block; }
-    body.collapsed .app { padding-top: 86px; }
+    body.collapsed .app { padding-top: 74px; }
 
     .stage {
       position: relative;
@@ -550,17 +551,20 @@
     .bubble.show { opacity: 1; transform: translateY(0) scale(1); }
 
     .panel {
-      width: 276px;
-      margin-top: 8px;
-      padding: 9px;
+      width: 342px;
+      max-height: calc(100vh - 300px);
+      margin-top: 6px;
+      padding: 10px;
       border-radius: 18px;
-      background: rgba(255, 250, 253, .78);
+      background: rgba(255, 250, 253, .88);
       border: 1px solid rgba(255, 186, 218, .58);
       box-shadow: 0 10px 24px rgba(119, 72, 129, .12);
       pointer-events: auto;
       -webkit-app-region: no-drag;
       display: none;
       opacity: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
       transform: translateY(6px) scale(.98);
       transition: opacity .18s ease, transform .18s ease;
     }
@@ -611,6 +615,49 @@
       font-size: 12px;
     }
     input[type="range"] { width: 100%; accent-color: var(--rose); }
+
+    .mobile-box {
+      display: none;
+      margin-top: 9px;
+      padding-top: 8px;
+      border-top: 1px dashed rgba(255, 154, 199, .55);
+      font-size: 12px;
+      line-height: 1.55;
+      color: #7c5872;
+    }
+    .mobile-box.show { display: block; }
+    .mobile-url {
+      margin: 7px 0;
+      padding: 8px;
+      border-radius: 12px;
+      background: rgba(255,255,255,.72);
+      border: 1px solid rgba(255, 186, 218, .58);
+      word-break: break-all;
+      user-select: text;
+    }
+    .qr-frame {
+      width: 132px;
+      height: 132px;
+      margin: 7px auto 4px;
+      border-radius: 18px;
+      background: #fff;
+      padding: 7px;
+      box-shadow: 0 8px 18px rgba(119, 72, 129, .12);
+    }
+    .qr-frame img { width: 100%; height: 100%; display: block; }
+    .reminder-mini-list {
+      max-height: 92px;
+      overflow: auto;
+      display: grid;
+      gap: 5px;
+      margin-top: 7px;
+    }
+    .reminder-mini-item {
+      padding: 7px 8px;
+      border-radius: 12px;
+      background: rgba(255,255,255,.66);
+      border: 1px solid rgba(255, 186, 218, .45);
+    }
 
     .avatar.speaking { animation: speakingBody .52s ease-in-out infinite alternate; }
     .avatar.speaking .mouth {
@@ -668,6 +715,705 @@
     @keyframes thinking { from{ transform: translateY(-3px) rotate(-1.7deg); } to{ transform: translateY(-7px) rotate(1.7deg); } }
     @keyframes alert { 0%,100%{ transform: translateY(0) scale(1); } 50%{ transform: translateY(-9px) scale(1.035); } }
     @keyframes sleep { 0%,100%{ transform: translateY(0) rotate(-.4deg); } 50%{ transform: translateY(-5px) rotate(.4deg); } }
+
+    /* === 用药提醒面板样式 === */
+    .med-panel {
+      display: none;
+      position: absolute;
+      right: 20px;
+      bottom: 24px;
+      width: 320px;
+      max-height: 62vh;
+      overflow-y: auto;
+      background: rgba(255, 250, 253, 0.96);
+      border-radius: 22px;
+      padding: 16px;
+      box-shadow: 0 24px 48px rgba(135, 86, 135, .22);
+      border: 1px solid rgba(255, 166, 205, .38);
+      backdrop-filter: blur(18px);
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+      color: #9a7f91;
+      padding: 4px 8px;
+      line-height: 1;
+      transition: color 0.2s ease;
+    }
+    .close-btn:hover {
+      color: #ff6b8a;
+      transform: scale(1.1);
+    }
+    .med-panel.active {
+      display: block;
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .med-panel h3 {
+      margin: 0 0 12px;
+      font-size: 16px;
+      color: #684e62;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .pill-status {
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-weight: 400;
+    }
+    .pill-status.on { background: #eafff6; color: #1c7850; }
+    .pill-status.off { background: #fff0f0; color: #c42b2b; }
+    .pill-status.api { background: #fff8e6; color: #b8860b; }
+    .med-nl-input, .med-toggle-row { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+    .med-nl-input input {
+      flex: 1;
+      border: 1px solid rgba(255, 166, 205, .4);
+      border-radius: 16px;
+      padding: 10px 14px;
+      font-size: 14px;
+      background: #fffafd;
+      color: #684e62;
+      font-family: inherit;
+      outline: none;
+    }
+    .med-nl-input button, .med-toggle-row button { border: 0; border-radius: 999px; padding: 10px 14px; background: linear-gradient(135deg, #ff8fc1, #9b7bea); color: #fff; cursor: pointer; font-size: 13px; font-weight: 700; font-family: inherit; }
+    .med-toggle-row button { padding: 8px 12px; background: #fff2f8; color: #7c5872; border: 1px solid rgba(255, 166, 205, .38); }
+    .med-toggle-row button.active { background: #eafff6; color: #1c7850; border-color: #bdf2da; }
+    .med-list { display: grid; gap: 8px; }
+    .med-item {
+      display: grid;
+      gap: 6px;
+      padding: 10px 12px;
+      border-radius: 16px;
+      background: rgba(255,255,255,.84);
+      border: 1px solid rgba(255, 166, 205, .26);
+    }
+    .med-item.disabled { opacity: .5; }
+    .med-item .med-top { display: flex; justify-content: space-between; align-items: center; }
+    .med-item .med-name { font-weight: 800; font-size: 15px; color: #684e62; }
+    .med-item .med-time { color: #ff6fa8; font-weight: 700; font-size: 13px; }
+    .med-item .med-detail { color: #9a7f91; font-size: 12px; display: flex; gap: 8px; flex-wrap: wrap; }
+    .med-item .med-actions { display: flex; gap: 6px; justify-content: flex-end; flex-wrap: wrap; }
+    .med-item .med-actions button { border: 0; border-radius: 999px; padding: 6px 10px; font-size: 11px; cursor: pointer; font-family: inherit; background: #fff2f8; color: #7c5872; border: 1px solid rgba(255, 166, 205, .3); }
+    .med-item .med-actions button.confirm-btn { background: #eafff6; color: #1c7850; border-color: #bdf2da; }
+    .med-escalated { margin-top: 12px; padding: 10px 12px; border-radius: 14px; background: #fff0f0; border: 1px solid #ffcccc; font-size: 12px; color: #c42b2b; display: none; }
+    .med-escalated.show { display: block; }
+    .med-voice-select { margin-top: 8px; display: flex; gap: 6px; align-items: center; font-size: 12px; color: #9a7f91; }
+    .med-voice-select select { border: 1px solid rgba(255, 166, 205, .38); border-radius: 12px; padding: 4px 8px; font-size: 12px; font-family: inherit; background: #fffafd; color: #684e62; }
+    .med-empty { text-align: center; padding: 20px; color: #9a7f91; font-size: 13px; }
+    
+    /* 慢病模板样式 */
+    .med-templates {
+      margin-bottom: 10px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(255, 166, 205, .2);
+    }
+    .template-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+    .template-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      padding: 8px 4px;
+      border: 1px solid rgba(255, 166, 205, .3);
+      border-radius: 10px;
+      background: linear-gradient(135deg, #fff9fc, #ffe8f3);
+      cursor: pointer;
+      font-size: 11px;
+      color: #684e62;
+      transition: all 0.2s ease;
+    }
+    .template-btn:hover {
+      background: linear-gradient(135deg, #ffe4f1, #ffd0e4);
+      transform: scale(1.02);
+    }
+    .template-icon {
+      font-size: 18px;
+    }
+    .disease-templates {
+      margin-bottom: 10px;
+      padding: 10px;
+      background: rgba(255, 240, 245, .5);
+      border-radius: 12px;
+      border: 1px solid rgba(255, 166, 205, .2);
+    }
+    .template-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 10px;
+      margin-bottom: 6px;
+      background: white;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 166, 205, .2);
+    }
+    .template-item-info {
+      flex: 1;
+    }
+    .template-item-name {
+      font-size: 13px;
+      font-weight: bold;
+      color: #684e62;
+    }
+    .template-item-detail {
+      font-size: 11px;
+      color: #9a7f91;
+      margin-top: 2px;
+    }
+    .template-item-btn {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 15px;
+      background: linear-gradient(135deg, #ff8fc1, #9b7bea);
+      color: white;
+      font-size: 11px;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+    .template-item-btn:hover {
+      transform: scale(1.05);
+    }
+    
+    /* 自定义提醒弹窗 */
+    .reminder-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.4);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    .reminder-modal.active { display: flex; }
+    .reminder-modal-content {
+      background: #fffafd;
+      border-radius: 24px;
+      padding: 24px;
+      width: 340px;
+      max-width: 90vw;
+      box-shadow: 0 24px 48px rgba(135, 86, 135, .3);
+      border: 1px solid rgba(255, 166, 205, .4);
+    }
+    .reminder-modal-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #684e62;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+    .reminder-form-group {
+      margin-bottom: 14px;
+    }
+    .reminder-form-group label {
+      display: block;
+      font-size: 12px;
+      color: #9a7f91;
+      margin-bottom: 6px;
+    }
+    .reminder-form-group input,
+    .reminder-form-group select {
+      width: 100%;
+      border: 1px solid rgba(255, 166, 205, .4);
+      border-radius: 14px;
+      padding: 10px 14px;
+      font-size: 14px;
+      background: #fff;
+      color: #684e62;
+      font-family: inherit;
+      outline: none;
+    }
+    .reminder-form-group input:focus,
+    .reminder-form-group select:focus {
+      border-color: #ff8fc1;
+      box-shadow: 0 0 0 3px rgba(255, 143, 193, .15);
+    }
+    .reminder-form-row {
+      display: flex;
+      gap: 10px;
+    }
+    .reminder-form-row .reminder-form-group { flex: 1; }
+    .voice-input-btn {
+      width: 36px;
+      height: 36px;
+      border: 0;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #ff8fc1, #9b7bea);
+      color: #fff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: transform .15s ease;
+    }
+    .voice-input-btn:hover { transform: scale(1.1); }
+    .voice-input-btn.recording {
+      animation: pulse 1s infinite;
+      background: linear-gradient(135deg, #ff4081, #e040fb);
+    }
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(255, 64, 129, .4); }
+      50% { box-shadow: 0 0 0 10px rgba(255, 64, 129, 0); }
+    }
+    .reminder-modal-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 18px;
+    }
+    .reminder-modal-actions button {
+      flex: 1;
+      border: 0;
+      border-radius: 999px;
+      padding: 12px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      transition: transform .15s ease;
+    }
+    .reminder-modal-actions button:hover { transform: scale(1.02); }
+    .reminder-modal-actions .btn-cancel {
+      background: #f5f0f4;
+      color: #9a7f91;
+    }
+    .reminder-modal-actions .btn-save {
+      background: linear-gradient(135deg, #ff8fc1, #9b7bea);
+      color: #fff;
+    }
+    .reminder-panel {
+      display: none;
+      position: absolute;
+      left: 20px;
+      bottom: 24px;
+      width: 320px;
+      max-height: 62vh;
+      overflow-y: auto;
+      background: rgba(255, 250, 253, 0.96);
+      border-radius: 22px;
+      padding: 16px;
+      box-shadow: 0 24px 48px rgba(135, 86, 135, .22);
+      border: 1px solid rgba(255, 166, 205, .38);
+      backdrop-filter: blur(18px);
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity .24s ease, transform .24s ease;
+    }
+    .reminder-panel.active {
+      display: block;
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .reminder-nl-input { display: flex; gap: 8px; margin-bottom: 12px; }
+    .reminder-nl-input input {
+      flex: 1;
+      border: 1px solid rgba(255, 166, 205, .4);
+      border-radius: 16px;
+      padding: 10px 14px;
+      font-size: 14px;
+      background: #fffafd;
+      color: #684e62;
+      font-family: inherit;
+      outline: none;
+    }
+    .reminder-nl-input button { border: 0; border-radius: 999px; padding: 10px 14px; background: linear-gradient(135deg, #ff8fc1, #9b7bea); color: #fff; cursor: pointer; font-size: 13px; font-weight: 700; font-family: inherit; }
+    .reminder-list { display: grid; gap: 8px; }
+    .remind-item {
+      display: grid;
+      gap: 6px;
+      padding: 10px 12px;
+      border-radius: 16px;
+      background: rgba(255,255,255,.84);
+      border: 1px solid rgba(255, 166, 205, .26);
+    }
+    .remind-item .remind-title { font-weight: 800; font-size: 15px; color: #684e62; }
+    .remind-item .remind-time { color: #ff6fa8; font-weight: 700; font-size: 13px; }
+    .remind-item .remind-actions { display: flex; gap: 6px; justify-content: flex-end; }
+    .remind-item .remind-actions button { border: 0; border-radius: 999px; padding: 6px 10px; font-size: 11px; cursor: pointer; font-family: inherit; background: #fff2f8; color: #7c5872; border: 1px solid rgba(255, 166, 205, .3); }
+    .remind-empty { text-align: center; padding: 20px; color: #9a7f91; font-size: 13px; }
+    .ai-chat-panel {
+      display: none;
+      position: absolute;
+      left: 20px;
+      top: 80px;
+      width: 340px;
+      max-height: 520px;
+      background: rgba(255, 250, 253, 0.96);
+      border-radius: 22px;
+      padding: 16px;
+      box-shadow: 0 24px 48px rgba(135, 86, 135, .22);
+      border: 1px solid rgba(255, 166, 205, .38);
+      backdrop-filter: blur(18px);
+      display: flex;
+      flex-direction: column;
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity .24s ease, transform .24s ease;
+    }
+    .ai-chat-panel.active {
+      display: flex;
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 12px;
+      max-height: 380px;
+    }
+    .chat-message {
+      padding: 10px 12px;
+      border-radius: 14px;
+      font-size: 13px;
+      line-height: 1.5;
+      word-break: break-word;
+    }
+    .chat-message.user {
+      background: linear-gradient(135deg, #ff8fc1, #9b7bea);
+      color: white;
+      align-self: flex-end;
+      max-width: 85%;
+    }
+    .chat-message.ai {
+      background: rgba(255,255,255,.84);
+      border: 1px solid rgba(255, 166, 205, .26);
+      color: #684e62;
+      align-self: flex-start;
+      max-width: 85%;
+    }
+    .chat-message.system {
+      background: transparent;
+      border: none;
+      color: #9a7f91;
+      align-self: center;
+      max-width: 90%;
+      text-align: center;
+      font-size: 12px;
+    }
+    .chat-input-box {
+      display: flex;
+      gap: 8px;
+    }
+    .chat-input-box input {
+      flex: 1;
+      border: 1px solid rgba(255, 166, 205, .4);
+      border-radius: 16px;
+      padding: 10px 14px;
+      font-size: 13px;
+      background: #fffafd;
+      color: #684e62;
+      font-family: inherit;
+      outline: none;
+    }
+    .chat-input-box button {
+      border: 0;
+      border-radius: 999px;
+      padding: 10px 14px;
+      background: linear-gradient(135deg, #ff8fc1, #9b7bea);
+      color: #fff;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 700;
+      font-family: inherit;
+    }
+
+    /* 家庭健康圈面板 */
+    .family-panel {
+      display: none;
+      position: absolute;
+      left: 20px;
+      top: 80px;
+      width: 340px;
+      max-height: 560px;
+      background: rgba(255, 250, 253, 0.96);
+      border-radius: 22px;
+      padding: 16px;
+      box-shadow: 0 24px 48px rgba(135, 86, 135, .22);
+      border: 1px solid rgba(255, 166, 205, .38);
+      backdrop-filter: blur(18px);
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity .24s ease, transform .24s ease;
+      overflow-y: auto;
+      z-index: 50;
+    }
+    .family-panel.active {
+      display: block;
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .family-tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 12px;
+      background: rgba(255,220,235,0.3);
+      border-radius: 12px;
+      padding: 3px;
+    }
+    .family-tab {
+      flex: 1;
+      border: 0;
+      border-radius: 10px;
+      padding: 6px 4px;
+      font-size: 12px;
+      cursor: pointer;
+      background: transparent;
+      color: #9a7f91;
+      font-weight: 500;
+      transition: all .2s;
+    }
+    .family-tab.active {
+      background: rgba(255,255,255,0.9);
+      color: #ff72ab;
+      box-shadow: 0 2px 8px rgba(255,120,171,0.15);
+    }
+    .family-tab-content {
+      min-height: 200px;
+    }
+    .card-type-btn {
+      border: 1.5px solid #f0d8e8;
+      border-radius: 14px;
+      padding: 5px 12px;
+      font-size: 12px;
+      background: #fff;
+      color: #9a7f91;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .card-type-btn.active {
+      border-color: #ff9cc7;
+      background: rgba(255,156,199,0.12);
+      color: #ff72ab;
+    }
+    .member-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 8px;
+      border-radius: 10px;
+      margin-bottom: 4px;
+      background: rgba(255,245,250,0.6);
+      font-size: 12px;
+    }
+    .member-status {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .member-status.done { background: #6dd58c; }
+    .member-status.missed { background: #ffb3b3; }
+    .member-status.unknown { background: #ddd; }
+    .leaderboard-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 10px;
+      border-radius: 10px;
+      margin-bottom: 4px;
+      background: rgba(255,245,250,0.5);
+      font-size: 12px;
+    }
+    .leaderboard-rank {
+      font-weight: bold;
+      color: #ff72ab;
+      width: 20px;
+      text-align: center;
+    }
+    .badge-item {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      background: rgba(255,230,240,0.5);
+      border: 1.5px solid rgba(255,180,210,0.3);
+    }
+    .badge-item.locked {
+      opacity: 0.3;
+      filter: grayscale(1);
+    }
+    .encourage-card {
+      padding: 10px 12px;
+      border-radius: 14px;
+      margin-bottom: 6px;
+      background: linear-gradient(135deg, rgba(255,230,240,0.6), rgba(230,220,255,0.4));
+      border: 1px solid rgba(255,180,210,0.3);
+      font-size: 12px;
+    }
+    .encourage-card-icon {
+      font-size: 24px;
+      margin-bottom: 4px;
+    }
+
+    /* 交友广场面板 */
+    .social-panel {
+      display: none;
+      position: absolute;
+      left: 20px;
+      top: 80px;
+      width: 350px;
+      max-height: 580px;
+      background: rgba(255, 250, 253, 0.96);
+      border-radius: 22px;
+      padding: 16px;
+      box-shadow: 0 24px 48px rgba(135, 86, 135, .22);
+      border: 1px solid rgba(255, 166, 205, .38);
+      backdrop-filter: blur(18px);
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity .24s ease, transform .24s ease;
+      overflow-y: auto;
+      z-index: 50;
+    }
+    .social-panel.active {
+      display: block;
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .social-tabs {
+      display: flex;
+      gap: 3px;
+      margin-bottom: 12px;
+      background: rgba(255,220,235,0.3);
+      border-radius: 12px;
+      padding: 3px;
+    }
+    .social-tab {
+      flex: 1;
+      border: 0;
+      border-radius: 10px;
+      padding: 6px 2px;
+      font-size: 11.5px;
+      cursor: pointer;
+      background: transparent;
+      color: #9a7f91;
+      font-weight: 500;
+      transition: all .2s;
+    }
+    .social-tab.active {
+      background: rgba(255,255,255,0.9);
+      color: #ff72ab;
+      box-shadow: 0 2px 8px rgba(255,120,171,0.15);
+    }
+    .social-tab-content { min-height: 180px; }
+    .nearby-msg {
+      padding: 8px 12px;
+      border-radius: 12px;
+      margin-bottom: 6px;
+      background: rgba(255,245,250,0.6);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    .nearby-msg-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      color: #b08ca0;
+      margin-bottom: 3px;
+    }
+    .feed-post {
+      padding: 10px 12px;
+      border-radius: 14px;
+      margin-bottom: 8px;
+      background: rgba(255,248,252,0.7);
+      border: 1px solid rgba(255,200,220,0.25);
+    }
+    .feed-post-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 6px;
+      font-size: 12px;
+    }
+    .feed-post-content {
+      font-size: 12.5px;
+      line-height: 1.6;
+      margin-bottom: 6px;
+    }
+    .feed-post-actions {
+      display: flex;
+      gap: 12px;
+      font-size: 11px;
+      color: #b08ca0;
+    }
+    .feed-post-actions button {
+      border: 0;
+      background: none;
+      color: #b08ca0;
+      font-size: 11px;
+      cursor: pointer;
+      padding: 0;
+    }
+    .feed-post-actions button:hover { color: #ff72ab; }
+    .feed-comment {
+      font-size: 11px;
+      padding: 4px 8px;
+      margin: 2px 0 2px 16px;
+      background: rgba(255,235,245,0.4);
+      border-radius: 8px;
+    }
+    .feed-comment-input {
+      display: flex;
+      gap: 4px;
+      margin: 4px 0 4px 16px;
+    }
+    .feed-comment-input input {
+      flex: 1;
+      font-size: 11px;
+      padding: 3px 6px;
+      border: 1px solid #f0d8e8;
+      border-radius: 6px;
+    }
+    .feed-comment-input button {
+      font-size: 11px;
+      padding: 3px 8px;
+    }
+    .friend-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 12px;
+      margin-bottom: 4px;
+      background: rgba(255,245,250,0.5);
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .friend-row:hover { background: rgba(255,220,235,0.4); }
+    .friend-avatar { font-size: 20px; }
+    .bump-match {
+      padding: 10px 12px;
+      border-radius: 14px;
+      margin-bottom: 6px;
+      background: linear-gradient(135deg, rgba(255,230,240,0.6), rgba(230,220,255,0.4));
+      border: 1px solid rgba(255,180,210,0.3);
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .bump-match button {
+      margin-left: auto;
+      font-size: 11px;
+      padding: 3px 10px;
+    }
   </style>
 </head>
 <body>
@@ -719,6 +1465,102 @@
         <button onclick="toggleSettings()">设置</button>
       </div>
       <div class="settings" id="settingsPanel">
+        <div style="text-align: right; margin-bottom: 8px;">
+          <button onclick="closeSettings()" class="close-btn">✕</button>
+        </div>
+        <div class="setting-line full">
+          <label>语音区域</label>
+          <select id="voiceRegionSelect" onchange="updateVoiceRegion()">
+            <option value="auto">自动选择</option>
+            <optgroup label="东亚">
+              <option value="zh-CN">中文（简体）</option>
+              <option value="zh-TW">中文（繁体）</option>
+              <option value="ja-JP">日本語</option>
+              <option value="ko-KR">한국어</option>
+            </optgroup>
+            <optgroup label="东南亚">
+              <option value="th-TH">ภาษาไทย（泰国）</option>
+              <option value="vi-VN">Tiếng Việt（越南）</option>
+              <option value="id-ID">Bahasa Indonesia（印尼）</option>
+              <option value="ms-MY">Bahasa Melayu（马来西亚）</option>
+              <option value="fil-PH">Filipino（菲律宾）</option>
+              <option value="my-MM">မြန်မာ（缅甸）</option>
+              <option value="km-KH">ខ្មែរ（柬埔寨）</option>
+              <option value="lo-LA">ລາວ（老挝）</option>
+            </optgroup>
+            <optgroup label="南亚">
+              <option value="hi-IN">हिन्दी（印度）</option>
+              <option value="ur-PK">اردو（巴基斯坦）</option>
+              <option value="bn-BD">বাংলা（孟加拉）</option>
+              <option value="ta-IN">தமிழ்（印度泰米尔）</option>
+              <option value="te-IN">తెలుగు（印度泰卢固）</option>
+              <option value="si-LK">සිංහල（斯里兰卡）</option>
+              <option value="ne-NP">नेपाली（尼泊尔）</option>
+            </optgroup>
+            <optgroup label="中亚/西亚">
+              <option value="tr-TR">Türkçe（土耳其）</option>
+              <option value="fa-IR">فارسی（伊朗）</option>
+              <option value="ar-SA">العربية（沙特）</option>
+              <option value="ar-AE">العربية（阿联酋）</option>
+              <option value="ar-EG">العربية（埃及）</option>
+              <option value="he-IL">עברית（以色列）</option>
+              <option value="kk-KZ">Қазақ（哈萨克斯坦）</option>
+              <option value="uz-UZ">Oʻzbek（乌兹别克）</option>
+            </optgroup>
+            <optgroup label="欧洲">
+              <option value="en-GB">English（英国）</option>
+              <option value="fr-FR">Français（法国）</option>
+              <option value="de-DE">Deutsch（德国）</option>
+              <option value="es-ES">Español（西班牙）</option>
+              <option value="it-IT">Italiano（意大利）</option>
+              <option value="pt-PT">Português（葡萄牙）</option>
+              <option value="ru-RU">Русский（俄罗斯）</option>
+              <option value="pl-PL">Polski（波兰）</option>
+              <option value="nl-NL">Nederlands（荷兰）</option>
+              <option value="sv-SE">Svenska（瑞典）</option>
+              <option value="da-DK">Dansk（丹麦）</option>
+              <option value="fi-FI">Suomi（芬兰）</option>
+              <option value="nb-NO">Norsk（挪威）</option>
+              <option value="cs-CZ">Čeština（捷克）</option>
+              <option value="sk-SK">Slovenčina（斯洛伐克）</option>
+              <option value="hu-HU">Magyar（匈牙利）</option>
+              <option value="ro-RU">Română（罗马尼亚）</option>
+              <option value="bg-BG">Български（保加利亚）</option>
+              <option value="hr-HR">Hrvatski（克罗地亚）</option>
+              <option value="sr-RS">Srpski（塞尔维亚）</option>
+              <option value="sl-SI">Slovenščina（斯洛文尼亚）</option>
+              <option value="el-GR">Ελληνικά（希腊）</option>
+              <option value="uk-UA">Українська（乌克兰）</option>
+              <option value="et-EE">Eesti（爱沙尼亚）</option>
+              <option value="lv-LV">Latviešu（拉脱维亚）</option>
+              <option value="lt-LT">Lietuvių（立陶宛）</option>
+            </optgroup>
+            <optgroup label="非洲">
+              <option value="sw-KE">Kiswahili（肯尼亚）</option>
+              <option value="ha-NG">Hausa（尼日利亚）</option>
+              <option value="am-ET">አማርኛ（埃塞俄比亚）</option>
+              <option value="yo-NG">Yoruba（尼日利亚）</option>
+              <option value="ig-NG">Igbo（尼日利亚）</option>
+              <option value="zu-ZA">isiZulu（南非）</option>
+              <option value="af-ZA">Afrikaans（南非）</option>
+            </optgroup>
+            <optgroup label="北美">
+              <option value="en-US">English（美国）</option>
+              <option value="es-MX">Español（墨西哥）</option>
+              <option value="fr-CA">Français（加拿大）</option>
+            </optgroup>
+            <optgroup label="南美">
+              <option value="pt-BR">Português（巴西）</option>
+              <option value="es-AR">Español（阿根廷）</option>
+              <option value="es-CO">Español（哥伦比亚）</option>
+              <option value="es-CL">Español（智利）</option>
+            </optgroup>
+            <optgroup label="大洋洲">
+              <option value="en-AU">English（澳大利亚）</option>
+              <option value="en-NZ">English（新西兰）</option>
+            </optgroup>
+          </select>
+        </div>
         <div class="setting-line full">
           <label>音色</label>
           <select id="voiceSelect"></select>
@@ -748,9 +1590,333 @@
           <button onclick="previewVoice()">试听</button>
           <button onclick="resetAvatarSize()">默认大小</button>
         </div>
+        <div class="row" style="margin-top:7px;">
+          <button onclick="toggleMobilePanel()">手机连接</button>
+          <button onclick="toggleSocialPanel()">交友广场</button>
+          <button onclick="toggleMedPanel()">用药提醒</button>
+          <button onclick="toggleRemindPanel()">额外提醒</button>
+          <button onclick="toggleAiChat()">AI 助手</button>
+          <button onclick="toggleFamilyPanel()">家庭健康圈</button>
+        </div>
+        <div class="mobile-box" id="mobilePanel">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <span style="font-weight: bold;">手机连接</span>
+            <button onclick="closeMobilePanel()" class="close-btn">✕</button>
+          </div>
+          <div>手机和电脑连同一个 Wi‑Fi 后，用手机访问下面地址：</div>
+          <div class="mobile-url" id="mobileUrlText">正在生成连接...</div>
+          <div class="qr-frame"><img id="mobileQr" alt="手机端连接二维码" /></div>
+          <div id="mobilePairText">配对码：-</div>
+          <div class="reminder-mini-list" id="reminderMiniList"></div>
+        </div>
       </div>
     </div>
   </div>
+
+  <div class="med-panel" id="medPanel">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+      <h3 style="margin: 0; font-size: 14px;">
+        慢病用药提醒
+        <span class="pill-status" id="medStatusDot">加载中</span>
+      </h3>
+      <button onclick="closeMedPanel()" class="close-btn">✕</button>
+    </div>
+    <div class="med-toggle-row">
+      <button id="medToggleBtn" onclick="toggleMedModule()">⏸ 禁用模块</button>
+      <button onclick="refreshMedPanel()">🔄 刷新</button>
+      <span style="font-size:11px;color:#9a7f91;" id="medModelInfo"></span>
+    </div>
+    
+    <!-- 慢病预设模板 -->
+    <div class="med-templates" id="medTemplates">
+      <div style="font-size: 12px; color: #9a7f91; margin-bottom: 6px;">快速添加慢病用药：</div>
+      <div class="template-grid">
+        <button class="template-btn" onclick="showDiseaseTemplates('diabetes')">
+          <span>糖尿病</span>
+        </button>
+        <button class="template-btn" onclick="showDiseaseTemplates('hypertension')">
+          <span>高血压</span>
+        </button>
+        <button class="template-btn" onclick="showDiseaseTemplates('cholesterol')">
+          <span>高血脂</span>
+        </button>
+        <button class="template-btn" onclick="showDiseaseTemplates('thyroid')">
+          <span>甲状腺</span>
+        </button>
+        <button class="template-btn" onclick="showDiseaseTemplates('heart')">
+          <span>心脏病</span>
+        </button>
+        <button class="template-btn" onclick="showDiseaseTemplates('custom')">
+          <span>自定义</span>
+        </button>
+      </div>
+    </div>
+    
+    <!-- 疾病模板详情 -->
+    <div class="disease-templates" id="diseaseTemplates" style="display: none;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <span id="diseaseTitle" style="font-weight: bold; font-size: 13px;"></span>
+        <button onclick="hideDiseaseTemplates()" class="close-btn" style="font-size: 12px;">返回</button>
+      </div>
+      <div id="diseaseTemplateList"></div>
+    </div>
+    
+    <div class="med-nl-input">
+      <input id="medNlInput" type="text" placeholder="说一句话设定提醒，如：每天早上8点吃二甲双胍一片" />
+      <button class="voice-input-btn" onclick="toggleVoiceInputFor('medNlInput')" title="语音输入">🎤</button>
+      <button onclick="createMedication()">设定</button>
+    </div>
+    <div class="med-voice-select">
+      播报语言：
+      <select id="medVoiceSelect" onchange="updateVoiceLang()">
+        <option value="zh-CN">中文（普通话）</option>
+        <option value="zh-TW">中文（台湾）</option>
+        <option value="en-US">English</option>
+        <option value="ja-JP">日本語</option>
+        <option value="ko-KR">한국어</option>
+        <option value="th-TH">ไทย</option>
+        <option value="vi-VN">Tiếng Việt</option>
+        <option value="id-ID">Bahasa Indonesia</option>
+        <option value="ms-MY">Bahasa Melayu</option>
+        <option value="fil-PH">Filipino</option>
+        <option value="my-MM">မြန်မာ</option>
+        <option value="km-KH">ខ្មែរ</option>
+        <option value="lo-LA">ລາວ</option>
+        <option value="hi-IN">हिन्दी</option>
+        <option value="ur-PK">اردو</option>
+        <option value="bn-BD">বাংলা</option>
+        <option value="ar-SA">العربية</option>
+        <option value="fa-IR">فارسی</option>
+        <option value="tr-TR">Türkçe</option>
+        <option value="ru-RU">Русский</option>
+      </select>
+    </div>
+    <div class="med-list" id="medList">
+      <div class="med-empty">加载中...</div>
+    </div>
+    <div class="med-escalated" id="medEscalated"></div>
+  </div>
+
+  <div class="reminder-panel" id="remindPanel">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+      <h3 style="margin: 0; font-size: 14px;">额外提醒</h3>
+      <button onclick="closeRemindPanel()" class="close-btn">✕</button>
+    </div>
+    <div class="reminder-nl-input">
+      <input id="remindNlInput" type="text" placeholder="输入需要被提醒的事项，如：15:00开会" />
+      <button class="voice-input-btn" onclick="toggleVoiceInputFor('remindNlInput')" title="语音输入">🎤</button>
+      <button onclick="createReminder()">添加</button>
+    </div>
+    <div class="reminder-list" id="remindList">
+      <div class="remind-empty">暂无额外提醒</div>
+    </div>
+  </div>
+
+  <div class="ai-chat-panel" id="aiChatPanel">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+      <h3 style="margin: 0; font-size: 14px;">AI 助手 <span style="font-size: 11px; color: #9a7f91;">(DeepSeek V3)</span></h3>
+      <div>
+        <button onclick="setDeepSeekKey()" style="font-size: 11px; padding: 4px 8px;" title="设置 API Key">🔑</button>
+        <button onclick="closeAiChat()" class="close-btn">✕</button>
+      </div>
+    </div>
+    <div class="chat-messages" id="chatMessages"></div>
+    <div class="chat-input-box">
+      <input id="aiChatInput" type="text" placeholder="问我任何问题..." />
+      <button class="voice-input-btn" onclick="toggleVoiceInputFor('aiChatInput')" title="语音输入">🎤</button>
+      <button onclick="sendAiMessage()">发送</button>
+    </div>
+  </div>
+
+  <!-- 家庭健康圈面板 -->
+  <div class="family-panel" id="familyPanel">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+      <h3 style="margin: 0; font-size: 14px;">家庭健康圈</h3>
+      <button onclick="closeFamilyPanel()" class="close-btn">✕</button>
+    </div>
+
+    <!-- 三个子标签 -->
+    <div class="family-tabs">
+      <button class="family-tab active" onclick="switchFamilyTab('family')" id="tabFamily">家庭组</button>
+      <button class="family-tab" onclick="switchFamilyTab('checkin')" id="tabCheckin">打卡挑战</button>
+      <button class="family-tab" onclick="switchFamilyTab('encourage')" id="tabEncourage">匿名鼓励</button>
+    </div>
+
+    <!-- 家庭组 -->
+    <div class="family-tab-content" id="familyTabFamily">
+      <div id="familySetup" style="display:none;">
+        <div style="font-size:12px;color:#9a7f91;margin-bottom:8px;">创建或加入家庭组，彼此可见用药状态（需授权）</div>
+        <div style="display:flex;gap:6px;margin-bottom:8px;">
+          <input type="text" id="familyNameInput" placeholder="家庭组名称" style="flex:1;font-size:12px;padding:5px 8px;border:1px solid #f0d8e8;border-radius:8px;" />
+          <button onclick="createFamily()" style="font-size:12px;padding:5px 10px;">创建</button>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <input type="text" id="familyJoinInput" placeholder="输入家庭组 ID" style="flex:1;font-size:12px;padding:5px 8px;border:1px solid #f0d8e8;border-radius:8px;" />
+          <button onclick="joinFamily()" style="font-size:12px;padding:5px 10px;">加入</button>
+        </div>
+      </div>
+      <div id="familyDashboard" style="display:none;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <div>
+            <span style="font-weight:bold;font-size:13px;" id="familyDisplayName">我的家庭</span>
+            <span style="font-size:11px;color:#9a7f91;margin-left:6px;" id="familyIdLabel"></span>
+          </div>
+          <button onclick="copyFamilyId()" style="font-size:11px;padding:3px 8px;">复制ID</button>
+        </div>
+        <div style="font-size:12px;color:#9a7f91;margin-bottom:6px;">成员列表（勾选授权可见用药状态）</div>
+        <div id="familyMemberList" style="margin-bottom:8px;"></div>
+        <div style="font-size:12px;padding:8px;background:rgba(255,200,220,0.15);border-radius:8px;margin-bottom:8px;">
+          <div style="font-weight:bold;margin-bottom:4px;">今日用药状态</div>
+          <div id="familyHealthStatus">加载中...</div>
+        </div>
+        <div style="font-size:11px;color:#b08ca0;">
+          小精灵播报：<span id="familyBroadcastText">-</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 打卡挑战 -->
+    <div class="family-tab-content" id="familyTabCheckin" style="display:none;">
+      <div style="text-align:center;padding:10px 0;">
+        <div style="font-size:32px;margin-bottom:4px;" id="checkinStreakEmoji">🔥</div>
+        <div style="font-size:22px;font-weight:bold;color:#ff72ab;" id="checkinStreakNum">0</div>
+        <div style="font-size:12px;color:#9a7f91;margin-bottom:12px;">连续打卡天数</div>
+        <button onclick="doCheckin()" id="checkinBtn" style="padding:10px 28px;border-radius:20px;font-size:14px;background:linear-gradient(135deg,#ff9cc7,#b99aea);color:#fff;border:0;cursor:pointer;">
+          今日打卡
+        </button>
+        <div style="font-size:11px;color:#b08ca0;margin-top:6px;" id="checkinTodayStatus"></div>
+      </div>
+      <div style="margin-top:12px;">
+        <div style="font-size:12px;font-weight:bold;margin-bottom:6px;">排行榜</div>
+        <div id="checkinLeaderboard"></div>
+      </div>
+      <div style="margin-top:12px;">
+        <div style="font-size:12px;font-weight:bold;margin-bottom:6px;">徽章墙</div>
+        <div id="badgeWall" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+      </div>
+    </div>
+
+    <!-- 匿名鼓励 -->
+    <div class="family-tab-content" id="familyTabEncourage" style="display:none;">
+      <div style="font-size:12px;color:#9a7f91;margin-bottom:8px;">给同病种的病友发送匿名鼓励卡片</div>
+      <div style="margin-bottom:10px;">
+        <div style="font-size:12px;margin-bottom:4px;">选择卡片类型</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
+          <button class="card-type-btn active" onclick="selectCardType('warm')" data-type="warm">温暖拥抱</button>
+          <button class="card-type-btn" onclick="selectCardType('fight')" data-type="fight">加油打气</button>
+          <button class="card-type-btn" onclick="selectCardType('flower')" data-type="flower">送你小花</button>
+          <button class="card-type-btn" onclick="selectCardType('star')" data-type="star">你是星光</button>
+        </div>
+      </div>
+      <div style="margin-bottom:10px;">
+        <div style="font-size:12px;margin-bottom:4px;">留一句话（可选）</div>
+        <div style="display:flex;gap:6px;">
+          <input type="text" id="encourageMsg" placeholder="你今天也很棒..." style="flex:1;font-size:12px;padding:5px 8px;border:1px solid #f0d8e8;border-radius:8px;" />
+          <button onclick="sendEncourage()" style="font-size:12px;padding:5px 10px;">发送</button>
+        </div>
+      </div>
+      <div style="font-size:12px;font-weight:bold;margin-bottom:6px;">收到的鼓励</div>
+      <div id="encourageReceived" style="max-height:180px;overflow-y:auto;"></div>
+    </div>
+  </div>
+
+  <!-- 交友广场面板 -->
+  <div class="social-panel" id="socialPanel">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <h3 style="margin:0;font-size:14px;">交友广场</h3>
+      <button onclick="closeSocialPanel()" class="close-btn">✕</button>
+    </div>
+
+    <!-- 个人信息设置 -->
+    <div id="socialProfileSetup" style="display:none;margin-bottom:10px;">
+      <div style="font-size:12px;color:#9a7f91;margin-bottom:8px;">设置你的昵称，开始交友之旅</div>
+      <div style="display:flex;gap:6px;margin-bottom:6px;">
+        <input type="text" id="socialNickname" placeholder="给自己取个昵称" maxlength="16" style="flex:1;font-size:12px;padding:5px 8px;border:1px solid #f0d8e8;border-radius:8px;" />
+        <select id="socialAvatar" style="font-size:12px;padding:4px;border:1px solid #f0d8e8;border-radius:8px;">
+          <option value="🐻">🐻</option><option value="🐰">🐰</option><option value="🐱">🐱</option>
+          <option value="🦊">🦊</option><option value="🐼">🐼</option><option value="🦋">🦋</option>
+          <option value="🌸">🌸</option><option value="🍀">🍀</option><option value="⭐">⭐</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:6px;">
+        <input type="text" id="socialBio" placeholder="一句话介绍自己（可选）" maxlength="50" style="flex:1;font-size:12px;padding:5px 8px;border:1px solid #f0d8e8;border-radius:8px;" />
+        <button onclick="saveSocialProfile()" style="font-size:12px;padding:5px 10px;">保存</button>
+      </div>
+    </div>
+
+    <!-- 已登录时显示昵称 -->
+    <div id="socialProfileBar" style="display:none;margin-bottom:10px;padding:6px 10px;background:rgba(255,230,240,0.3);border-radius:10px;font-size:12px;">
+      <span id="socialProfileDisplay"></span>
+      <button onclick="editSocialProfile()" style="float:right;font-size:11px;padding:2px 6px;">编辑</button>
+    </div>
+
+    <!-- 四个子标签 -->
+    <div class="social-tabs">
+      <button class="social-tab active" onclick="switchSocialTab('nearby')" id="socialTabNearby">广场</button>
+      <button class="social-tab" onclick="switchSocialTab('bump')" id="socialTabBump">碰一碰</button>
+      <button class="social-tab" onclick="switchSocialTab('feed')" id="socialTabFeed">晾晒圈</button>
+      <button class="social-tab" onclick="switchSocialTab('friends')" id="socialTabFriends">好友</button>
+    </div>
+
+    <!-- 广场：匿名消息 -->
+    <div class="social-tab-content" id="socialContentNearby">
+      <div style="font-size:11px;color:#9a7f91;margin-bottom:8px;">匿名向周围发送心情，所有人都能看到</div>
+      <div style="display:flex;gap:6px;margin-bottom:10px;">
+        <input type="text" id="nearbyMsgInput" placeholder="说点什么..." maxlength="120" style="flex:1;font-size:12px;padding:5px 8px;border:1px solid #f0d8e8;border-radius:8px;" />
+        <button onclick="sendNearbyMsg()" style="font-size:12px;padding:5px 10px;">发送</button>
+      </div>
+      <div id="nearbyMsgList" style="max-height:260px;overflow-y:auto;"></div>
+    </div>
+
+    <!-- 碰一碰 -->
+    <div class="social-tab-content" id="socialContentBump" style="display:none;">
+      <div style="text-align:center;padding:12px 0;">
+        <div style="font-size:40px;margin-bottom:8px;" id="bumpEmoji">🤝</div>
+        <div style="font-size:13px;color:#9a7f91;margin-bottom:4px;">点击下方按钮进入「碰一碰」模式</div>
+        <div style="font-size:11px;color:#b08ca0;margin-bottom:12px;">当多人同时碰一碰时，即可互相认识</div>
+        <button onclick="doBump()" id="bumpBtn" style="padding:12px 32px;border-radius:24px;font-size:14px;background:linear-gradient(135deg,#ff9cc7,#b99aea);color:#fff;border:0;cursor:pointer;">
+          碰一碰
+        </button>
+        <div style="font-size:11px;margin-top:8px;" id="bumpStatus"></div>
+      </div>
+      <div id="bumpMatches" style="margin-top:10px;"></div>
+      <div id="bumpWaiting" style="display:none;text-align:center;padding:16px;">
+        <div style="font-size:20px;animation:pulse 1.2s infinite;">💫</div>
+        <div style="font-size:12px;color:#9a7f91;margin-top:6px;">等待其他人碰一碰中...</div>
+      </div>
+    </div>
+
+    <!-- 晾晒圈 -->
+    <div class="social-tab-content" id="socialContentFeed" style="display:none;">
+      <div style="margin-bottom:10px;">
+        <div style="display:flex;gap:6px;">
+          <input type="text" id="feedPostInput" placeholder="分享你的心情..." maxlength="200" style="flex:1;font-size:12px;padding:5px 8px;border:1px solid #f0d8e8;border-radius:8px;" />
+          <button onclick="publishFeedPost()" style="font-size:12px;padding:5px 10px;">发布</button>
+        </div>
+      </div>
+      <div id="feedList" style="max-height:320px;overflow-y:auto;"></div>
+    </div>
+
+    <!-- 好友 -->
+    <div class="social-tab-content" id="socialContentFriends" style="display:none;">
+      <div id="friendList"></div>
+      <div id="friendChatBox" style="display:none;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <span style="font-weight:bold;font-size:13px;" id="friendChatName"></span>
+          <button onclick="closeFriendChat()" style="font-size:11px;padding:2px 6px;">返回</button>
+        </div>
+        <div id="friendChatMessages" style="max-height:200px;overflow-y:auto;margin-bottom:8px;"></div>
+        <div style="display:flex;gap:6px;">
+          <input type="text" id="friendChatInput" placeholder="发消息..." maxlength="200" style="flex:1;font-size:12px;padding:5px 8px;border:1px solid #f0d8e8;border-radius:8px;" />
+          <button onclick="sendFriendMsg()" style="font-size:12px;padding:5px 10px;">发送</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(1.15)} }
+  </style>
 
   <script>
     const avatar = document.getElementById('avatar');
@@ -766,6 +1932,42 @@
     const pitchValue = document.getElementById('pitchValue');
     const volumeValue = document.getElementById('volumeValue');
     const voiceToggleBtn = document.getElementById('voiceToggleBtn');
+    const mobilePanel = document.getElementById('mobilePanel');
+    const mobileUrlText = document.getElementById('mobileUrlText');
+    const mobileQr = document.getElementById('mobileQr');
+    const mobilePairText = document.getElementById('mobilePairText');
+    const reminderMiniList = document.getElementById('reminderMiniList');
+    const electronApi = (() => {
+      try {
+        return window.require ? window.require('electron') : null;
+      } catch (error) {
+        return null;
+      }
+    })();
+    const ipcRenderer = electronApi ? electronApi.ipcRenderer : null;
+
+    // 点击穿透功能 - 检测鼠标是否在透明区域
+    function setupClickThrough() {
+      if (!ipcRenderer) return;
+      
+      const interactiveSelectors = '.avatar, .bubble, .panel, .top-tools, .open-chip, .tool-btn, button, input, select, .med-panel, .reminder-panel, .ai-chat-panel, .family-panel, .social-panel, .reminder-modal, .stage, .mobile-box';
+      
+      document.addEventListener('mouseover', (e) => {
+        const target = e.target;
+        const isInteractive = target.closest(interactiveSelectors);
+        ipcRenderer.send('set-ignore-mouse', !isInteractive);
+      });
+      
+      document.addEventListener('mouseout', (e) => {
+        const target = e.target;
+        const isInteractive = target.closest(interactiveSelectors);
+        if (isInteractive) {
+          ipcRenderer.send('set-ignore-mouse', true);
+        }
+      });
+    }
+    
+    setupClickThrough();
 
     let availableVoices = [];
     let selectedVoice = null;
@@ -790,6 +1992,53 @@
       { key: 'cat', name: '橘猫助手' },
       { key: 'cloud', name: '云朵团子' }
     ];
+
+    // ─── Stage 事件：双击切皮肤 / 单击开设置 / 拖拽移动 ───
+    (function setupStageEvents() {
+      const stageEl = document.getElementById('stage');
+      if (!stageEl) return;
+      let clickTimer = null;
+      let isDragging = false;
+      let dragStartX = 0, dragStartY = 0;
+
+      stageEl.addEventListener('mousedown', (e) => {
+        isDragging = false;
+        dragStartX = e.screenX;
+        dragStartY = e.screenY;
+        if (ipcRenderer) ipcRenderer.send('avatar-drag-start');
+        stageEl.classList.add('dragging');
+
+        const onMove = () => {
+          const dx = Math.abs(e.screenX - dragStartX);
+          const dy = Math.abs(e.screenY - dragStartY);
+          if (dx > 4 || dy > 4) isDragging = true;
+        };
+        const onUp = () => {
+          document.removeEventListener('mousemove', onMove);
+          document.removeEventListener('mouseup', onUp);
+          stageEl.classList.remove('dragging');
+          if (ipcRenderer) ipcRenderer.send('avatar-drag-stop');
+        };
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+      });
+
+      stageEl.addEventListener('click', (e) => {
+        if (isDragging) return;
+        if (clickTimer) {
+          clearTimeout(clickTimer);
+          clickTimer = null;
+          // 双击 → 切皮肤
+          nextAvatarTheme();
+        } else {
+          // 单击 → 延迟 250ms 看有没有第二次
+          clickTimer = setTimeout(() => {
+            clickTimer = null;
+            if (!isDragging) toggleSettings();
+          }, 250);
+        }
+      });
+    })();
 
     const messages = {
       greeting: [
@@ -854,7 +2103,1756 @@
       ]
     };
 
+    // 多语言消息
+    const messagesByLang = {
+      'en': {
+        greeting: [
+          "I'm here, and I'll softly accompany you today.",
+          "Hello! I'll gently help you remember important things.",
+          "Good morning! Let's take it slow today, no rush.",
+          "I'm ready! Just call me when you need me.",
+          "You've worked hard. I'll be right here beside you.",
+          "Hey there! What would you like to do first today?",
+          "I'm all set to help you keep track of things.",
+          "So glad to see you! Let's make today a good one.",
+          "Remember to be kind to yourself today.",
+          "I'll stay quietly by your side and remind you when it matters."
+        ],
+        meeting: [
+          "Quick reminder! Your meeting is about to start.",
+          "There's a meeting coming up. I've got it noted.",
+          "Meeting time is near! Want to prepare your materials?",
+          "A meeting is starting soon. Take a deep breath.",
+          "Meeting reminder! Don't forget to bring your best self.",
+          "The meeting is about to begin. I'll help you stay on time."
+        ],
+        ticket: [
+          "Important! Ticket sales are about to start. Are you ready?",
+          "Concert tickets go on sale soon! I'll watch with you.",
+          "Ticket reminder! You can open the page to prepare.",
+          "The key moment is coming! Wishing you the best of luck."
+        ],
+        rest: [
+          "You've been busy for a while. How about some water?",
+          "Time for a break! Your eyes need care too.",
+          "Maybe stretch a little and let your body relax.",
+          "Taking it slow is fine. Take care of yourself first.",
+          "You've been working hard. Take a minute to breathe.",
+          "Have some water. I'll keep watching the time for you."
+        ],
+        complete: [
+          "Well done! You've worked hard!",
+          "All done! I'm happy for you.",
+          "You're amazing! Another task completed.",
+          "Great job! This step is finished.",
+          "You've earned a little reward!",
+          "You were very diligent today. I noticed!",
+          "Beautiful work! Let's keep moving forward.",
+          "You've made even more progress. That's wonderful!",
+          "This was done really well. Kudos to you!",
+          "It doesn't have to be perfect. You've tried your best.",
+          "I knew you could do it. Truly impressive!",
+          "Completing each task is progress worth celebrating."
+        ],
+        encouragement: [
+          "Don't worry. Let's take it one step at a time.",
+          "You're doing great. No need to be perfect all at once.",
+          "Take your time. I'll be here with you.",
+          "If you're tired, it's okay to pause. Your feelings matter.",
+          "You're not alone in this. I'll always be here.",
+          "Just start with the smallest step. That's a great beginning.",
+          "Making it through today is already worth celebrating.",
+          "It's okay. Having ups and downs is completely normal.",
+          "You can do this. Let's break it down into smaller pieces.",
+          "Don't be too hard on yourself. You can accomplish things gently."
+        ]
+      },
+      'ja': {
+        greeting: [
+          "ここにいますよ。今日もそっとそばにいます。",
+          "こんにちは！大切なことを優しくお忘れしないようにします。",
+          "おはよう！今日は一緒にゆっくりいきましょう。",
+          "準備完了です！必要なときは呼んでくださいね。",
+          "今日もお疲れ様。そばにいますよ。",
+          "こんにちは！今日は何から始めたいですか？",
+          "準備万端です。大切なスケジュールをお守りしますね。",
+          "会えて嬉しいです！今日も素敵にしましょう。",
+          "今日も自分に優しくしてくださいね。",
+          "静かにそばにいて、大切なときにお知らせしますね。"
+        ],
+        meeting: [
+          "リマインダーです！もうすぐ会議が始まります。",
+          "会議がありますね。覚えておきます。",
+          "もうすぐ会議の時間です！資料を準備しますか？",
+          "会議がもうすぐ始まります。深呼吸しましょう。",
+          "会議のリマインダーです！ベストな状態で参加しましょう。",
+          "会議がもうすぐ始まります。時間通りにお手伝いしますね。"
+        ],
+        ticket: [
+          "重要なお知らせ！チケット販売がもうすぐ始まります。準備はできましたか？",
+          "コンサートチケットがもうすぐ発売です！一緒に見守りますね。",
+          "チケットリマインダー！ページを開いて準備しましょう。",
+          "大事な瞬間が来ます！うまくいくことをお祈りします。"
+        ],
+        rest: [
+          "ずっと忙しかったですね。お水はいかがですか？",
+          "休憩しましょう！目もケアが必要ですよ。",
+          "少しストレッチして体をリラックスさせましょう。",
+          "ゆっくりで大丈夫です。まず自分を大切に。",
+          "頑張りすぎです。一分くらい休憩しましょう。",
+          "お水を飲んでください。時間が来たらお知らせしますね。"
+        ],
+        complete: [
+          "よくできました！お疲れ様！",
+          "完了です！嬉しいです。",
+          "本当にすごい！もう一つ達成しましたね。",
+          "素晴らしい！このステップは完了です。",
+          "小さなご褒美を自分にあげましょう！",
+          "今日も真面目に頑張りましたね。見てましたよ！",
+          "完璧じゃなくても大丈夫。十分頑張りました。",
+          "あなたならできると思ってました。本当にすごいです！",
+          "一つ一つの達成は素晴らしい進歩です。"
+        ],
+        encouragement: [
+          "心配しないで。一歩ずつ進みましょう。",
+          "とても上手にできてます。完璧じゃなくても大丈夫。",
+          "ゆっくりでいいよ。そばにいます。",
+          "疲れたときは休んでも大丈夫。あなたの気持ちも大切です。",
+          "一人じゃないよ。いつもここにいます。",
+          "一番小さな一歩から始めましょう。それで十分素晴らしい。",
+          "今日を乗り越えただけで十分称賛に値します。",
+          "大丈夫。波があるのはとても自然なことです。",
+          "できるよ。小さく分けてみましょう。",
+          "自分を責めすぎないで。優しくても物事は達成できるよ。"
+        ]
+      },
+      'ko': {
+        greeting: [
+          "여기 있어요. 오늘도 부드럽게 곁에 있을게요.",
+          "안녕하세요! 중요한 것을 부드럽게 기억해 드릴게요.",
+          "좋은 아침! 오늘은 함께 천천히 가요.",
+          "준비 완료! 필요할 때 불러주세요.",
+          "오늘도 수고하셨어요. 옆에 있을게요.",
+          "안녕하세요! 오늘은 무엇부터 하고 싶으세요?",
+          "모두 준비됐어요. 중요한 일정을 챙겨 드릴게요.",
+          "만나서 반가워요! 오늘도 좋은 하루 보내요.",
+          "오늘도 자신에게 친절하게 대해주세요.",
+          "조용히 곁에 있으면서 중요한 때 알려 드릴게요."
+        ],
+        meeting: [
+          "알림이에요! 회의가 곧 시작됩니다.",
+          "회의가 있어요. 기억해 두었어요.",
+          "회의 시간이 다가와요! 자료를 준비하시겠어요?",
+          "회의가 곧 시작됩니다. 깊은 숨을 쉬어요.",
+          "회의 알림이에요! 최상의 컨디션으로 참석하세요.",
+          "회의가 곧 시작됩니다. 정시에 시작할 수 있도록 도와드릴게요."
+        ],
+        ticket: [
+          "중요 알림! 티켓 판매가 곧 시작됩니다. 준비되셨나요?",
+          "콘서트 티켓이 곧 판매됩니다! 함께 지켜볼게요.",
+          "티켓 알림! 페이지를 열어 준비하세요.",
+          "중요한 순간이 다가와요! 좋은 결과를 빌게요."
+        ],
+        rest: [
+          "한동안 바빴죠. 물 한 잔은 어때요?",
+          "휴식 시간이에요! 눈도 관리가 필요해요.",
+          "조금 스트레칭하고 몸을 이완시켜 보세요.",
+          "천천히 해도 괜찮아요. 자신을 먼저 돌보세요.",
+          "정말 수고하셨어요. 1분이라도 쉬어가요.",
+          "물을 마셔요. 시간이 되면 알려 드릴게요."
+        ],
+        complete: [
+          "잘했어요! 수고하셨어요!",
+          "완료예요! 기뻐요.",
+          "정말 대단해요! 또 하나를 달성했어요.",
+          "멋져요! 이 단계는 완료예요.",
+          "작은 보상을 자신에게 주세요!",
+          "오늘도 성실히 노력하셨어요. 봤어요!",
+          "완벽하지 않아도 괜찮아요. 충분히 노력했어요.",
+          "당신이라면 할 수 있었어요. 정말 대단해요!",
+          "하나하나의 성취는 놀라운 진전이에요."
+        ],
+        encouragement: [
+          "걱정 마세요. 한 걸음씩 나아가요.",
+          "정말 잘하고 있어요. 완벽할 필요 없어요.",
+          "천천히 해요. 곁에 있을게요.",
+          "피곤하면 쉬어도 괜찮아요. 당신의 감정도 중요해요.",
+          "혼자가 아니에요. 항상 여기 있을게요.",
+          "가장 작은 한 걸음부터 시작해요. 그것만으로도 충분히 대단해요.",
+          "오늘을 버텨낸 것만으로도 충분히 칭찬받을 만해요.",
+          "괜찮아요. 기복이 있는 건 자연스러운 일이에요.",
+          "할 수 있어요. 작게 나눠봐요.",
+          "자신을 너무 탓하지 마세요. 부드럽게도 할 수 있어요."
+        ]
+      },
+      'fr': {
+        greeting: [
+          "Je suis là, et je serai doucement à tes côtés aujourd'hui.",
+          "Bonjour ! Je t'aiderai gentiment à te souvenir des choses importantes.",
+          "Bonjour ! Allons-y doucement aujourd'hui, pas de pression.",
+          "Je suis prête ! Appelle-moi quand tu as besoin.",
+          "Tu as travaillé dur aujourd'hui. Je serai là à côté de toi.",
+          "Salut ! Qu'est-ce que tu aimerais faire en premier aujourd'hui ?",
+          "Je suis prête à t'aider à suivre tes emplois du temps.",
+          "Ravi de te voir ! Faisons de cette belle journée.",
+          "N'oublie pas d'être gentil avec toi-même aujourd'hui.",
+          "Je resterai tranquillement à tes côtés et te préviendrai quand ce sera important."
+        ],
+        meeting: [
+          "Petit rappel ! Ta réunion va bientôt commencer.",
+          "Il y a une réunion à venir. Je l'ai notée.",
+          "L'heure de la réunion approche ! Tu veux préparer tes documents ?",
+          "Une réunion commence bientôt. Respire profondément.",
+          "Rappel de réunion ! N'oublie pas d'apporter ton meilleur état.",
+          "La réunion va commencer. Je t'aiderai à être à l'heure."
+        ],
+        ticket: [
+          "Important ! La billetterie ouvre bientôt. Es-tu prêt ?",
+          "Les billets de concert seront bientôt en vente ! Je surveille avec toi.",
+          "Rappel billets ! Ouvre la page pour te préparer.",
+          "Le moment clé approche ! Je te souhaite bonne chance."
+        ],
+        rest: [
+          "Tu es occupé depuis un moment. Un peu d'eau ?",
+          "C'est l'heure de la pause ! Tes yeux ont aussi besoin d'attention.",
+          "Étire-toi un peu et détends ton corps.",
+          "Prends ton temps. Prends soin de toi d'abord.",
+          "Tu as bien travaillé. Prends une minute pour souffler.",
+          "Bois un peu d'eau. Je continuerai à surveiller l'heure pour toi."
+        ],
+        complete: [
+          "Bien joué ! Tu as travaillé dur !",
+          "C'est fait ! Je suis contente pour toi.",
+          "Tu es incroyable ! Une autre tâche accomplie.",
+          "Super travail ! Cette étape est terminée.",
+          "Tu mérites une petite récompense !",
+          "Tu as été très diligent aujourd'hui. J'ai vu !",
+          "Ce n'est pas grave d'être parfait. Tu as fait de ton mieux.",
+          "Je savais que tu pouvais le faire. Vraiment impressionnant !",
+          "Chaque accomplissement est un progrès remarquable."
+        ],
+        encouragement: [
+          "Ne t'inquiète pas. Avançons étape par étape.",
+          "Tu te débrouilles très bien. Pas besoin d'être parfait.",
+          "Prends ton temps. Je serai là avec toi.",
+          "Si tu es fatigué, c'est ok de faire une pause. Tes sentiments comptent.",
+          "Tu n'es pas seul. Je serai toujours là.",
+          "Commence par la plus petite étape. C'est déjà un bon début.",
+          "Avoir tenu aujourd'hui mérite déjà des félicitations.",
+          "C'est normal d'avoir des hauts et des bas.",
+          "Tu peux le faire. Découpons en plus petits morceaux.",
+          "Ne sois pas trop dur avec toi. On peut accomplir les choses avec douceur."
+        ]
+      },
+      'de': {
+        greeting: [
+          "Ich bin hier und begleite dich sanft durch den Tag.",
+          "Hallo! Ich helfe dir sanft, dich an wichtige Dinge zu erinnern.",
+          "Guten Morgen! Lass uns heute langsam angehen, keine Eile.",
+          "Ich bin bereit! Ruf mich einfach an, wenn du mich brauchst.",
+          "Du hast heute hart gearbeitet. Ich bin an deiner Seite.",
+          "Hallo! Was möchtest du heute zuerst tun?",
+          "Ich bin bereit, dir bei deinen Terminen zu helfen.",
+          "Schön, dich zu sehen! Lass uns einen schönen Tag haben.",
+          "Sei heute bitte nett zu dir selbst.",
+          "Ich bleibe still an deiner Seite und erinnere dich, wenn es wichtig ist."
+        ],
+        meeting: [
+          "Kleine Erinnerung! Dein Meeting beginnt bald.",
+          "Es gibt ein Meeting. Ich hab es notiert.",
+          "Die Meeting-Zeit naht! Möchtest du deine Unterlagen vorbereiten?",
+          "Ein Meeting beginnt bald. Atme tief durch.",
+          "Meeting-Erinnerung! Vergiss nicht, dich in Bestform zu bringen.",
+          "Das Meeting beginnt bald. Ich helfe dir, pünktlich zu sein."
+        ],
+        ticket: [
+          "Wichtig! Der Ticketverkauf beginnt bald. Bist du bereit?",
+          "Konzerttickets kommen bald in den Verkauf! Ich halte Ausschau mit dir.",
+          "Ticket-Erinnerung! Öffne die Seite, um dich vorzubereiten.",
+          "Der Schlüsselmoment kommt! Ich drücke dir die Daumen."
+        ],
+        rest: [
+          "Du warst eine Weile beschäftigt. Wie wäre es mit etwas Wasser?",
+          "Zeit für eine Pause! Auch deine Augen brauchen Pflege.",
+          "Streck dich ein wenig und entspanne deinen Körper.",
+          "Nimm dir Zeit. Kümmere dich zuerst um dich selbst.",
+          "Du hast hart gearbeitet. Nimm dir eine Minute zum Durchatmen.",
+          "Trink etwas Wasser. Ich passe weiterhin auf die Zeit auf."
+        ],
+        complete: [
+          "Gut gemacht! Du hast hart gearbeitet!",
+          "Fertig! Ich freue mich für dich.",
+          "Du bist toll! Weitere Aufgabe erledigt.",
+          "Super Arbeit! Dieser Schritt ist abgeschlossen.",
+          "Du hast dir eine kleine Belohnung verdient!",
+          "Du warst heute sehr fleißig. Ich hab es gesehen!",
+          "Es muss nicht perfekt sein. Du hast dein Bestes gegeben.",
+          "Ich wusste, dass du es schaffst. Wirklich beeindruckend!",
+          "Jede Errungenschaft ist ein bemerkenswerter Fortschritt."
+        ],
+        encouragement: [
+          "Mach dir keine Sorgen. Gehen wir Schritt für Schritt vor.",
+          "Du machst das großartig. Du musst nicht perfekt sein.",
+          "Nimm dir Zeit. Ich bin bei dir.",
+          "Wenn du müde bist, ist es okay zu pausieren. Deine Gefühle zählen.",
+          "Du bist nicht allein. Ich werde immer hier sein.",
+          "Beginne mit dem kleinsten Schritt. Das ist schon ein guter Anfang.",
+          "Es verdient bereits Lob, heute durchgehalten zu haben.",
+          "Es ist okay. Höhen und Tiefen sind ganz normal.",
+          "Du schaffst das. Lass es uns in kleinere Stücke aufteilen.",
+          "Sei nicht zu streng mit dir. Man kann die Dinge sanft erreichen."
+        ]
+      },
+      'es': {
+        greeting: [
+          "Estoy aquí y te acompañaré suavemente hoy.",
+          "¡Hola! Te ayudaré suavemente a recordar las cosas importantes.",
+          "¡Buenos días! Vamos despacio hoy, sin prisa.",
+          "¡Estoy lista! Llámame cuando me necesites.",
+          "Has trabajado duro hoy. Estaré a tu lado.",
+          "¡Hola! ¿Qué te gustaría hacer primero hoy?",
+          "Estoy lista para ayudarte a seguir tus horarios.",
+          "¡Qué gusto verte! Hagamos de este un buen día.",
+          "Recuerda ser amable contigo mismo hoy.",
+          "Me quedaré tranquila a tu lado y te avisaré cuando sea importante."
+        ],
+        meeting: [
+          "¡Recordatorio! Tu reunión está a punto de comenzar.",
+          "Hay una reunión pendiente. La he anotado.",
+          "¡La hora de la reunión se acerca! ¿Quieres preparar tus documentos?",
+          "Una reunión comienza pronto. Respira profundo.",
+          "¡Recordatorio de reunión! No olvides llevar tu mejor estado.",
+          "La reunión está por comenzar. Te ayudaré a llegar a tiempo."
+        ],
+        ticket: [
+          "¡Importante! La venta de entradas comienza pronto. ¿Estás listo?",
+          "¡Las entradas del concierto saldrán a la venta pronto! Estaré atento contigo.",
+          "¡Recordatorio de entradas! Abre la página para prepararte.",
+          "¡El momento clave se acerca! Te deseo mucha suerte."
+        ],
+        rest: [
+          "Has estado ocupado un rato. ¿Qué tal un poco de agua?",
+          "¡Es hora de descansar! Tus ojos también necesitan cuidado.",
+          "Estira un poco y relaja tu cuerpo.",
+          "Tómate tu tiempo. Cuídate primero.",
+          "Has trabajado duro. Tómate un minuto para respirar.",
+          "Bebe algo de agua. Seguiré vigilando el tiempo por ti."
+        ],
+        complete: [
+          "¡Bien hecho! ¡Has trabajado duro!",
+          "¡Listo! Me alegro por ti.",
+          "¡Eres increíble! Otra tarea completada.",
+          "¡Gran trabajo! Este paso está terminado.",
+          "¡Te mereces una pequeña recompensa!",
+          "Has sido muy diligente hoy. ¡Lo vi!",
+          "No tiene que ser perfecto. Has dado lo mejor de ti.",
+          "Sabía que podías hacerlo. ¡Realmente impresionante!",
+          "Cada logro es un progreso notable."
+        ],
+        encouragement: [
+          "No te preocupes. Avancemos paso a paso.",
+          "Lo estás haciendo muy bien. No necesitas ser perfecto.",
+          "Tómate tu tiempo. Estaré contigo.",
+          "Si estás cansado, está bien descansar. Tus sentimientos importan.",
+          "No estás solo. Siempre estaré aquí.",
+          "Comienza con el paso más pequeño. Eso ya es un gran comienzo.",
+          "Haber aguantado hoy ya merece felicitaciones.",
+          "Está bien. Los altibajos son completamente normales.",
+          "Tú puedes. Dividámoslo en partes más pequeñas.",
+          "No seas demasiado duro contigo. Se pueden lograr las cosas con suavidad."
+        ]
+      }
+    };
+
+    // 语言代码到翻译键的映射
+    const langToTranslationKey = {
+      'zh': 'zh', 'zh-CN': 'zh', 'zh-TW': 'zh',
+      'en': 'en', 'en-US': 'en', 'en-GB': 'en', 'en-AU': 'en', 'en-NZ': 'en',
+      'ja': 'ja', 'ja-JP': 'ja',
+      'ko': 'ko', 'ko-KR': 'ko',
+      'th': 'th', 'th-TH': 'th',
+      'vi': 'vi', 'vi-VN': 'vi',
+      'id': 'id', 'id-ID': 'id',
+      'ms': 'ms', 'ms-MY': 'ms',
+      'fil': 'fil', 'fil-PH': 'fil',
+      'my': 'my', 'my-MM': 'my',
+      'km': 'km', 'km-KH': 'km',
+      'lo': 'lo', 'lo-LA': 'lo',
+      'hi': 'hi', 'hi-IN': 'hi',
+      'ur': 'ur', 'ur-PK': 'ur',
+      'bn': 'bn', 'bn-BD': 'bn', 'bn-IN': 'bn',
+      'ta': 'ta', 'ta-IN': 'ta', 'ta-LK': 'ta',
+      'te': 'te', 'te-IN': 'te',
+      'si': 'si', 'si-LK': 'si',
+      'ne': 'ne', 'ne-NP': 'ne',
+      'tr': 'tr', 'tr-TR': 'tr',
+      'fa': 'fa', 'fa-IR': 'fa',
+      'ar': 'ar', 'ar-SA': 'ar', 'ar-AE': 'ar', 'ar-EG': 'ar',
+      'he': 'he', 'he-IL': 'he',
+      'kk': 'kk', 'kk-KZ': 'kk',
+      'uz': 'uz', 'uz-UZ': 'uz',
+      'sw': 'sw', 'sw-KE': 'sw', 'sw-TZ': 'sw',
+      'ha': 'ha', 'ha-NG': 'ha',
+      'am': 'am', 'am-ET': 'am',
+      'yo': 'yo', 'yo-NG': 'yo',
+      'ig': 'ig', 'ig-NG': 'ig',
+      'zu': 'zu', 'zu-ZA': 'zu',
+      'af': 'af', 'af-ZA': 'af',
+      'fr': 'fr', 'fr-FR': 'fr', 'fr-CA': 'fr',
+      'de': 'de', 'de-DE': 'de',
+      'es': 'es', 'es-ES': 'es', 'es-MX': 'es', 'es-AR': 'es', 'es-CO': 'es', 'es-CL': 'es',
+      'it': 'it', 'it-IT': 'it',
+      'pt': 'pt', 'pt-PT': 'pt', 'pt-BR': 'pt',
+      'ru': 'ru', 'ru-RU': 'ru',
+      'pl': 'pl', 'pl-PL': 'pl',
+      'nl': 'nl', 'nl-NL': 'nl',
+      'sv': 'sv', 'sv-SE': 'sv',
+      'da': 'da', 'da-DK': 'da',
+      'fi': 'fi', 'fi-FI': 'fi',
+      'nb': 'nb', 'nb-NO': 'nb', 'nn': 'nb',
+      'cs': 'cs', 'cs-CZ': 'cs',
+      'sk': 'sk', 'sk-SK': 'sk',
+      'hu': 'hu', 'hu-HU': 'hu',
+      'ro': 'ro', 'ro-RO': 'ro',
+      'bg': 'bg', 'bg-BG': 'bg',
+      'hr': 'hr', 'hr-HR': 'hr',
+      'sr': 'sr', 'sr-RS': 'sr',
+      'sl': 'sl', 'sl-SI': 'sl',
+      'el': 'el', 'el-GR': 'el',
+      'uk': 'uk', 'uk-UA': 'uk',
+      'et': 'et', 'et-EE': 'et',
+      'lv': 'lv', 'lv-LV': 'lv',
+      'lt': 'lt', 'lt-LT': 'lt'
+    };
+
+    // 获取当前语言的翻译键
+    function getCurrentLangKey() {
+      const region = localStorage.getItem('voice_region') || 'auto';
+      if (region === 'auto') return 'zh';
+      return langToTranslationKey[region] || region.split('-')[0] || 'en';
+    }
+
+    // 获取翻译文本
+    function t(key) {
+      const langKey = getCurrentLangKey();
+      const translations = uiTranslations[langKey] || uiTranslations['en'] || uiTranslations['zh'];
+      return translations[key] || uiTranslations['en'][key] || uiTranslations['zh'][key] || key;
+    }
+
+    // UI 多语言翻译
+    const uiTranslations = {
+
+      'zh': {
+        voiceRegion: '语音区域',
+        voiceTimbre: '音色',
+        size: '大小',
+        speed: '语速',
+        pitch: '音调',
+        volume: '音量',
+        voiceOn: '语音：开',
+        voiceOff: '语音：关',
+        preview: '试听',
+        defaultSize: '默认大小',
+        phoneConnect: '手机连接',
+        newReminder: '桌面新建提醒',
+        medReminder: '用药提醒',
+        extraReminder: '额外提醒',
+        aiAssistant: 'AI 助手',
+        settings: '设置',
+        greeting: '问候',
+        meeting: '会议',
+        ticket: '抢票',
+        rest: '休息',
+        encourage: '鼓励',
+        autoSelect: '自动选择',
+        medPlaceholder: '说一句话设定提醒，如：每天早上8点吃二甲双胍一片',
+        remindPlaceholder: '输入需要被提醒的事项，如：15:00开会',
+        aiPlaceholder: '问我任何问题...',
+        noReminders: '暂无额外提醒',
+        reminderTitle: '提醒标题',
+        reminderTime: '提醒时间',
+        reminderType: '提醒类型',
+        reminderNote: '备注（可选）',
+        titlePlaceholder: '例如：下午3点开会',
+        notePlaceholder: '添加备注...',
+        reminderTypes: ['日程', '会议', '用药提醒', '抢票', '快递', '闹钟', '其他'],
+        quickAddMeds: '快速添加慢病用药：',
+        diabetes: '糖尿病',
+        hypertension: '高血压',
+        cholesterol: '高血脂',
+        thyroid: '甲状腺',
+        heart: '心脏病',
+        custom: '自定义',
+        cancel: '取消',
+        save: '保存提醒',
+        set: '设定'
+      },
+      'en': {
+        voiceRegion: 'Voice Region',
+        voiceTimbre: 'Voice',
+        size: 'Size',
+        speed: 'Speed',
+        pitch: 'Pitch',
+        volume: 'Volume',
+        voiceOn: 'Voice: ON',
+        voiceOff: 'Voice: OFF',
+        preview: 'Preview',
+        defaultSize: 'Default Size',
+        phoneConnect: 'Phone Link',
+        newReminder: 'New Reminder',
+        medReminder: 'Med Reminder',
+        extraReminder: 'Extra Reminder',
+        aiAssistant: 'AI Assistant',
+        settings: 'Settings',
+        greeting: 'Greeting',
+        meeting: 'Meeting',
+        ticket: 'Ticket',
+        rest: 'Rest',
+        encourage: 'Encourage',
+        autoSelect: 'Auto Select',
+        medPlaceholder: 'Set a reminder, e.g.: Take Metformin at 8am every day',
+        remindPlaceholder: 'Enter reminder, e.g.: Meeting at 3pm',
+        aiPlaceholder: 'Ask me anything...',
+        noReminders: 'No extra reminders',
+        reminderTitle: 'Title',
+        reminderTime: 'Time',
+        reminderType: 'Type',
+        reminderNote: 'Note (optional)',
+        titlePlaceholder: 'e.g.: Meeting at 3pm',
+        notePlaceholder: 'Add note...',
+        reminderTypes: ['Schedule', 'Meeting', 'Medication', 'Ticket', 'Delivery', 'Alarm', 'Other'],
+        quickAddMeds: 'Quick add chronic disease medication:',
+        diabetes: 'Diabetes',
+        hypertension: 'Hypertension',
+        cholesterol: 'Cholesterol',
+        thyroid: 'Thyroid',
+        heart: 'Heart Disease',
+        custom: 'Custom',
+        cancel: 'Cancel',
+        save: 'Save',
+        set: 'Set'
+      },
+      'ja': {
+        voiceRegion: '音声地域',
+        voiceTimbre: '音声',
+        size: 'サイズ',
+        speed: '速度',
+        pitch: 'ピッチ',
+        volume: '音量',
+        voiceOn: '音声：ON',
+        voiceOff: '音声：OFF',
+        preview: 'プレビュー',
+        defaultSize: 'デフォルトサイズ',
+        phoneConnect: '携帯接続',
+        newReminder: '新規リマインダー',
+        medReminder: '服薬リマインダー',
+        extraReminder: '追加リマインダー',
+        aiAssistant: 'AI アシスタント',
+        settings: '設定',
+        greeting: '挨拶',
+        meeting: '会議',
+        ticket: 'チケット',
+        rest: '休憩',
+        encourage: '励まし',
+        autoSelect: '自動選択',
+        medPlaceholder: '音声でリマインダーを設定：毎朝8時にメトホルミンを服用',
+        remindPlaceholder: 'リマインダーを入力：15時に会議',
+        aiPlaceholder: '何でも聞いてください...',
+        noReminders: '追加リマインダーなし',
+        reminderTitle: 'タイトル',
+        reminderTime: '時間',
+        reminderType: 'タイプ',
+        reminderNote: 'メモ（任意）',
+        titlePlaceholder: '例：15時に会議',
+        notePlaceholder: 'メモを追加...',
+        reminderTypes: ['スケジュール', '会議', '服薬', 'チケット', '配達', 'アラーム', 'その他'],
+        quickAddMeds: '慢性疾患の薬をすばやく追加：',
+        diabetes: '糖尿病',
+        hypertension: '高血圧',
+        cholesterol: '高脂血症',
+        thyroid: '甲状腺',
+        heart: '心臓病',
+        custom: 'カスタム',
+        cancel: 'キャンセル',
+        save: '保存',
+        set: '設定'
+      },
+      'ko': {
+        voiceRegion: '음성 지역',
+        voiceTimbre: '음성',
+        size: '크기',
+        speed: '속도',
+        pitch: '피치',
+        volume: '볼륨',
+        voiceOn: '음성: ON',
+        voiceOff: '음성: OFF',
+        preview: '미리보기',
+        defaultSize: '기본 크기',
+        phoneConnect: '휴대폰 연결',
+        newReminder: '새 알림',
+        medReminder: '복약 알림',
+        extraReminder: '추가 알림',
+        aiAssistant: 'AI 어시스턴트',
+        settings: '설정',
+        greeting: '인사',
+        meeting: '회의',
+        ticket: '티켓',
+        rest: '휴식',
+        encourage: '격려',
+        autoSelect: '자동 선택',
+        medPlaceholder: '음성으로 알림 설정: 매일 아침 8시에 메트포르민 복용',
+        remindPlaceholder: '알림 입력: 오후 3시 회의',
+        aiPlaceholder: '무엇이든 물어보세요...',
+        noReminders: '추가 알림 없음',
+        reminderTitle: '제목',
+        reminderTime: '시간',
+        reminderType: '유형',
+        reminderNote: '메모 (선택)',
+        titlePlaceholder: '예: 오후 3시 회의',
+        notePlaceholder: '메모 추가...',
+        reminderTypes: ['일정', '회의', '복약', '티켓', '배송', '알람', '기타'],
+        quickAddMeds: '만성질환 약물 빠른 추가:',
+        diabetes: '당뇨병',
+        hypertension: '고혈압',
+        cholesterol: '고지혈증',
+        thyroid: '갑상선',
+        heart: '심장병',
+        custom: '사용자 정의',
+        cancel: '취소',
+        save: '저장',
+        set: '설정'
+      },
+      'fr': {
+        voiceRegion: 'Région vocale',
+        voiceTimbre: 'Voix',
+        size: 'Taille',
+        speed: 'Vitesse',
+        pitch: 'Tonalité',
+        volume: 'Volume',
+        voiceOn: 'Voix: ON',
+        voiceOff: 'Voix: OFF',
+        preview: 'Aperçu',
+        defaultSize: 'Taille par défaut',
+        phoneConnect: 'Connexion téléphone',
+        newReminder: 'Nouveau rappel',
+        medReminder: 'Rappel médicament',
+        extraReminder: 'Rappel supplémentaire',
+        aiAssistant: 'Assistant IA',
+        settings: 'Paramètres',
+        greeting: 'Salutation',
+        meeting: 'Réunion',
+        ticket: 'Billet',
+        rest: 'Repos',
+        encourage: 'Encouragement',
+        autoSelect: 'Sélection auto'
+      },
+      'de': {
+        voiceRegion: 'Sprachregion',
+        voiceTimbre: 'Stimme',
+        size: 'Größe',
+        speed: 'Geschwindigkeit',
+        pitch: 'Tonhöhe',
+        volume: 'Lautstärke',
+        voiceOn: 'Stimme: AN',
+        voiceOff: 'Stimme: AUS',
+        preview: 'Vorschau',
+        defaultSize: 'Standardgröße',
+        phoneConnect: 'Telefonverbindung',
+        newReminder: 'Neue Erinnerung',
+        medReminder: 'Medikamentenerinnerung',
+        extraReminder: 'Zusätzliche Erinnerung',
+        aiAssistant: 'KI-Assistent',
+        settings: 'Einstellungen',
+        greeting: 'Begrüßung',
+        meeting: 'Besprechung',
+        ticket: 'Ticket',
+        rest: 'Ruhen',
+        encourage: 'Ermutigung',
+        autoSelect: 'Auto-Auswahl'
+      },
+      'es': {
+        voiceRegion: 'Región de voz',
+        voiceTimbre: 'Voz',
+        size: 'Tamaño',
+        speed: 'Velocidad',
+        pitch: 'Tono',
+        volume: 'Volumen',
+        voiceOn: 'Voz: ON',
+        voiceOff: 'Voz: OFF',
+        preview: 'Vista previa',
+        defaultSize: 'Tamaño predeterminado',
+        phoneConnect: 'Conexión teléfono',
+        newReminder: 'Nuevo recordatorio',
+        medReminder: 'Recordatorio de medicación',
+        extraReminder: 'Recordatorio adicional',
+        aiAssistant: 'Asistente IA',
+        settings: 'Configuración',
+        greeting: 'Saludo',
+        meeting: 'Reunión',
+        ticket: 'Boleto',
+        rest: 'Descanso',
+        encourage: 'Ánimo',
+        autoSelect: 'Selección automática'
+      },
+      // 东南亚语言
+      'th': {
+        voiceRegion: 'ภูมิภาคเสียง',
+        voiceTimbre: 'เสียง',
+        size: 'ขนาด',
+        speed: 'ความเร็ว',
+        pitch: 'ระดับเสียง',
+        volume: 'ระดับเสียง',
+        voiceOn: 'เสียง: เปิด',
+        voiceOff: 'เสียง: ปิด',
+        preview: 'ตัวอย่าง',
+        defaultSize: 'ขนาดเริ่มต้น',
+        phoneConnect: 'เชื่อมต่อโทรศัพท์',
+        newReminder: 'การแจ้งเตือนใหม่',
+        medReminder: 'แจ้งเตือนยา',
+        extraReminder: 'การแจ้งเตือนเพิ่มเติม',
+        aiAssistant: 'ผู้ช่วย AI',
+        settings: 'การตั้งค่า',
+        greeting: 'ทักทาย',
+        meeting: 'การประชุม',
+        ticket: 'ตั๋ว',
+        rest: 'พักผ่อน',
+        encourage: 'ให้กำลังใจ',
+        autoSelect: 'เลือกอัตโนมัติ'
+      },
+      'vi': {
+        voiceRegion: 'Vùng giọng',
+        voiceTimbre: 'Giọng',
+        size: 'Kích thước',
+        speed: 'Tốc độ',
+        pitch: 'Cao độ',
+        volume: 'Âm lượng',
+        voiceOn: 'Giọng: BẬT',
+        voiceOff: 'Giọng: TẮT',
+        preview: 'Xem trước',
+        defaultSize: 'Kích thước mặc định',
+        phoneConnect: 'Kết nối điện thoại',
+        newReminder: 'Nhắc nhở mới',
+        medReminder: 'Nhắc nhở thuốc',
+        extraReminder: 'Nhắc nhở thêm',
+        aiAssistant: 'Trợ lý AI',
+        settings: 'Cài đặt',
+        greeting: 'Chào hỏi',
+        meeting: 'Cuộc họp',
+        ticket: 'Vé',
+        rest: 'Nghỉ ngơi',
+        encourage: 'Khuyến khích',
+        autoSelect: 'Tự động chọn'
+      },
+      'id': {
+        voiceRegion: 'Wilayah Suara',
+        voiceTimbre: 'Suara',
+        size: 'Ukuran',
+        speed: 'Kecepatan',
+        pitch: 'Nada',
+        volume: 'Volume',
+        voiceOn: 'Suara: NYALA',
+        voiceOff: 'Suara: MATI',
+        preview: 'Pratinjau',
+        defaultSize: 'Ukuran Default',
+        phoneConnect: 'Hubungkan Ponsel',
+        newReminder: 'Pengingat Baru',
+        medReminder: 'Pengingat Obat',
+        extraReminder: 'Pengingat Tambahan',
+        aiAssistant: 'Asisten AI',
+        settings: 'Pengaturan',
+        greeting: 'Sapaan',
+        meeting: 'Rapat',
+        ticket: 'Tiket',
+        rest: 'Istirahat',
+        encourage: 'Dorongan',
+        autoSelect: 'Pilih Otomatis'
+      },
+      'ms': {
+        voiceRegion: 'Rantau Suara',
+        voiceTimbre: 'Suara',
+        size: 'Saiz',
+        speed: 'Kelajuan',
+        pitch: 'Nada',
+        volume: 'Kelantangan',
+        voiceOn: 'Suara: HIDUP',
+        voiceOff: 'Suara: MATI',
+        preview: 'Pratonton',
+        defaultSize: 'Saiz Lalai',
+        phoneConnect: 'Sambung Telefon',
+        newReminder: 'Peringatan Baru',
+        medReminder: 'Peringatan Ubat',
+        extraReminder: 'Peringatan Tambahan',
+        aiAssistant: 'Pembantu AI',
+        settings: 'Tetapan',
+        greeting: 'Salam',
+        meeting: 'Mesyuarat',
+        ticket: 'Tiket',
+        rest: 'Rehat',
+        encourage: 'Galakan',
+        autoSelect: 'Pilih Automatik'
+      },
+      'fil': {
+        voiceRegion: 'Rehiyon ng Boses',
+        voiceTimbre: 'Boses',
+        size: 'Laki',
+        speed: 'Bilis',
+        pitch: 'Tono',
+        volume: 'Dami',
+        voiceOn: 'Boses: BUKAS',
+        voiceOff: 'Boses: SARADO',
+        preview: 'Preview',
+        defaultSize: 'Default na Laki',
+        phoneConnect: 'Ikonekta ang Telepono',
+        newReminder: 'Bagong Paalala',
+        medReminder: 'Paalala ng Gamot',
+        extraReminder: 'Karagdagang Paalala',
+        aiAssistant: 'AI Assistant',
+        settings: 'Mga Setting',
+        greeting: 'Bati',
+        meeting: 'Pulong',
+        ticket: 'Tiket',
+        rest: 'Pahinga',
+        encourage: 'Paghihikayat',
+        autoSelect: 'Auto Select'
+      },
+      // 南亚语言
+      'hi': {
+        voiceRegion: 'आवाज़ क्षेत्र',
+        voiceTimbre: 'आवाज़',
+        size: 'आकार',
+        speed: 'गति',
+        pitch: 'स्वर',
+        volume: 'आवाज़',
+        voiceOn: 'आवाज़: चालू',
+        voiceOff: 'आवाज़: बंद',
+        preview: 'पूर्वावलोकन',
+        defaultSize: 'डिफ़ॉल्ट आकार',
+        phoneConnect: 'फ़ोन कनेक्ट करें',
+        newReminder: 'नया रिमाइंडर',
+        medReminder: 'दवा रिमाइंडर',
+        extraReminder: 'अतिरिक्त रिमाइंडर',
+        aiAssistant: 'AI सहायक',
+        settings: 'सेटिंग्स',
+        greeting: 'अभिवादन',
+        meeting: 'बैठक',
+        ticket: 'टिकट',
+        rest: 'आराम',
+        encourage: 'प्रोत्साहन',
+        autoSelect: 'ऑटो चुनें'
+      },
+      'ur': {
+        voiceRegion: 'آواز کا علاقہ',
+        voiceTimbre: 'آواز',
+        size: 'سائز',
+        speed: 'رفتار',
+        pitch: 'ٹون',
+        volume: 'آواز',
+        voiceOn: 'آواز: آن',
+        voiceOff: 'آواز: آف',
+        preview: 'پیش نظارہ',
+        defaultSize: 'ڈیفالٹ سائز',
+        phoneConnect: 'فون جوڑیں',
+        newReminder: 'نیا ریمائنڈر',
+        medReminder: 'دوا ریمائنڈر',
+        extraReminder: 'اضافی ریمائنڈر',
+        aiAssistant: 'AI معاون',
+        settings: 'ترتیبات',
+        greeting: 'سلام',
+        meeting: 'میٹنگ',
+        ticket: 'ٹکٹ',
+        rest: 'آرام',
+        encourage: 'حوصلہ افزائی',
+        autoSelect: 'آٹو منتخب کریں'
+      },
+      'bn': {
+        voiceRegion: 'কণ্ঠস্বর অঞ্চল',
+        voiceTimbre: 'কণ্ঠস্বর',
+        size: 'আকার',
+        speed: 'গতি',
+        pitch: 'স্বর',
+        volume: 'শব্দ',
+        voiceOn: 'কণ্ঠস্বর: চালু',
+        voiceOff: 'কণ্ঠস্বর: বন্ধ',
+        preview: 'পূর্বরূপ',
+        defaultSize: 'ডিফল্ট আকার',
+        phoneConnect: 'ফোন সংযুক্ত করুন',
+        newReminder: 'নতুন রিমাইন্ডার',
+        medReminder: 'ওষুধ রিমাইন্ডার',
+        extraReminder: 'অতিরিক্ত রিমাইন্ডার',
+        aiAssistant: 'AI সহায়ক',
+        settings: 'সেটিংস',
+        greeting: 'শুভেচ্ছা',
+        meeting: 'সভা',
+        ticket: 'টিকিট',
+        rest: 'বিশ্রাম',
+        encourage: 'উৎসাহ',
+        autoSelect: 'স্বয়ংক্রিয় নির্বাচন'
+      },
+      'ta': {
+        voiceRegion: 'குரல் பகுதி',
+        voiceTimbre: 'குரல்',
+        size: 'அளவு',
+        speed: 'வேகம்',
+        pitch: 'தொனி',
+        volume: 'ஒலி',
+        voiceOn: 'குரல்: இயக்கு',
+        voiceOff: 'குரல்: நிறுத்து',
+        preview: 'முன்னோட்டம்',
+        defaultSize: 'இயல்புநிலை அளவு',
+        phoneConnect: 'தொலைபேசி இணை',
+        newReminder: 'புதிய நினைவூட்டல்',
+        medReminder: 'மருந்து நினைவூட்டல்',
+        extraReminder: 'கூடுதல் நினைவூட்டல்',
+        aiAssistant: 'AI உதவியாளர்',
+        settings: 'அமைப்புகள்',
+        greeting: 'வாழ்த்து',
+        meeting: 'கூட்டம்',
+        ticket: 'டிக்கெட்',
+        rest: 'ஓய்வு',
+        encourage: 'ஊக்கம்',
+        autoSelect: 'தானியங்கி தேர்வு'
+      },
+      'te': {
+        voiceRegion: 'వాయిస్ ప్రాంతం',
+        voiceTimbre: 'వాయిస్',
+        size: 'పరిమాణం',
+        speed: 'వేగం',
+        pitch: 'టోన్',
+        volume: 'వాల్యూమ్',
+        voiceOn: 'వాయిస్: ఆన్',
+        voiceOff: 'వాయిస్: ఆఫ్',
+        preview: 'ప్రివ్యూ',
+        defaultSize: 'డిఫాల్ట్ పరిమాణం',
+        phoneConnect: 'ఫోన్ కనెక్ట్',
+        newReminder: 'కొత్త రిమైండర్',
+        medReminder: 'మందు రిమైండర్',
+        extraReminder: 'అదనపు రిమైండర్',
+        aiAssistant: 'AI అసిస్టెంట్',
+        settings: 'సెట్టింగ్‌లు',
+        greeting: 'శుభాకాంక్షలు',
+        meeting: 'సమావేశం',
+        ticket: 'టికెట్',
+        rest: 'విశ్రాంతి',
+        encourage: 'ప్రోత్సాహం',
+        autoSelect: 'ఆటో ఎంపిక'
+      },
+      // 中亚/西亚语言
+      'tr': {
+        voiceRegion: 'Ses Bölgesi',
+        voiceTimbre: 'Ses',
+        size: 'Boyut',
+        speed: 'Hız',
+        pitch: 'Ton',
+        volume: 'Ses Seviyesi',
+        voiceOn: 'Ses: AÇIK',
+        voiceOff: 'Ses: KAPALI',
+        preview: 'Önizleme',
+        defaultSize: 'Varsayılan Boyut',
+        phoneConnect: 'Telefon Bağlantısı',
+        newReminder: 'Yeni Hatırlatıcı',
+        medReminder: 'İlaç Hatırlatıcı',
+        extraReminder: 'Ek Hatırlatıcı',
+        aiAssistant: 'AI Asistan',
+        settings: 'Ayarlar',
+        greeting: 'Selamlaşma',
+        meeting: 'Toplantı',
+        ticket: 'Bilet',
+        rest: 'Dinlenme',
+        encourage: 'Teşvik',
+        autoSelect: 'Otomatik Seç'
+      },
+      'fa': {
+        voiceRegion: 'منطقه صدا',
+        voiceTimbre: 'صدا',
+        size: 'اندازه',
+        speed: 'سرعت',
+        pitch: 'لحن',
+        volume: 'صدا',
+        voiceOn: 'صدا: روشن',
+        voiceOff: 'صدا: خاموش',
+        preview: 'پیش‌نمایش',
+        defaultSize: 'اندازه پیش‌فرض',
+        phoneConnect: 'اتصال تلفن',
+        newReminder: 'یادآور جدید',
+        medReminder: 'یادآور دارو',
+        extraReminder: 'یادآور اضافی',
+        aiAssistant: 'دستیار AI',
+        settings: 'تنظیمات',
+        greeting: 'سلام و احوالپرسی',
+        meeting: 'جلسه',
+        ticket: 'بلیط',
+        rest: 'استراحت',
+        encourage: 'تشویق',
+        autoSelect: 'انتخاب خودکار'
+      },
+      'ar': {
+        voiceRegion: 'منطقة الصوت',
+        voiceTimbre: 'الصوت',
+        size: 'الحجم',
+        speed: 'السرعة',
+        pitch: 'النبرة',
+        volume: 'مستوى الصوت',
+        voiceOn: 'الصوت: تشغيل',
+        voiceOff: 'الصوت: إيقاف',
+        preview: 'معاينة',
+        defaultSize: 'الحجم الافتراضي',
+        phoneConnect: 'ربط الهاتف',
+        newReminder: 'تذكير جديد',
+        medReminder: 'تذكير الدواء',
+        extraReminder: 'تذكير إضافي',
+        aiAssistant: 'مساعد AI',
+        settings: 'الإعدادات',
+        greeting: 'تحية',
+        meeting: 'اجتماع',
+        ticket: 'تذكرة',
+        rest: 'استراحة',
+        encourage: 'تشجيع',
+        autoSelect: 'اختيار تلقائي'
+      },
+      'he': {
+        voiceRegion: 'אזור קול',
+        voiceTimbre: 'קול',
+        size: 'גודל',
+        speed: 'מהירות',
+        pitch: 'טון',
+        volume: 'עוצמת קול',
+        voiceOn: 'קול: דלוק',
+        voiceOff: 'קול: כבוי',
+        preview: 'תצוגה מקדימה',
+        defaultSize: 'גודל ברירת מחדל',
+        phoneConnect: 'חבר טלפון',
+        newReminder: 'תזכורת חדשה',
+        medReminder: 'תזכורת תרופה',
+        extraReminder: 'תזכורת נוספת',
+        aiAssistant: 'עוזר AI',
+        settings: 'הגדרות',
+        greeting: 'ברכה',
+        meeting: 'פגישה',
+        ticket: 'כרטיס',
+        rest: 'מנוחה',
+        encouragement: 'עידוד',
+        autoSelect: 'בחירה אוטומטית'
+      },
+      'kk': {
+        voiceRegion: 'Дыбыс аймағы',
+        voiceTimbre: 'Дыбыс',
+        size: 'Өлшем',
+        speed: 'Жылдамдық',
+        pitch: 'Тон',
+        volume: 'Дыбыс деңгейі',
+        voiceOn: 'Дыбыс: ҚОСУЛЫ',
+        voiceOff: 'Дыбыс: ӨШІРУЛІ',
+        preview: 'Алдын ала қарау',
+        defaultSize: 'Әдепкі өлшем',
+        phoneConnect: 'Телефон қосу',
+        newReminder: 'Жаңа еске салғыш',
+        medReminder: 'Дәрі еске салғыш',
+        extraReminder: 'Қосымша еске салғыш',
+        aiAssistant: 'AI көмекші',
+        settings: 'Параметрлер',
+        greeting: 'Сәлемдесу',
+        meeting: 'Жиналыс',
+        ticket: 'Билет',
+        rest: 'Демалыс',
+        encourage: 'Ынталандыру',
+        autoSelect: 'Автоматты таңдау'
+      },
+      'uz': {
+        voiceRegion: 'Ovoz mintaqasi',
+        voiceTimbre: 'Ovoz',
+        size: 'Hajm',
+        speed: 'Tezlik',
+        pitch: 'Ton',
+        volume: 'Ovoz balandligi',
+        voiceOn: 'Ovoz: YOQILGAN',
+        voiceOff: 'Ovoz: O\'CHIRILGAN',
+        preview: 'Ko\'rish',
+        defaultSize: 'Standart hajm',
+        phoneConnect: 'Telefon ulash',
+        newReminder: 'Yangi eslatma',
+        medReminder: 'Dori eslatmasi',
+        extraReminder: 'Qo\'shimcha eslatma',
+        aiAssistant: 'AI yordamchi',
+        settings: 'Sozlamalar',
+        greeting: 'Salomlashish',
+        meeting: 'Yig\'ilish',
+        ticket: 'Chipta',
+        rest: 'Dam olish',
+        encourage: 'Rag\'batlantirish',
+        autoSelect: 'Avtotanlash'
+      },
+      // 非洲语言
+      'sw': {
+        voiceRegion: 'Eneo la Sauti',
+        voiceTimbre: 'Sauti',
+        size: 'Ukubwa',
+        speed: 'Kasi',
+        pitch: 'Sauti',
+        volume: 'Sauti',
+        voiceOn: 'Sauti: WASHA',
+        voiceOff: 'Sauti: ZIMA',
+        preview: 'Hakiki',
+        defaultSize: 'Ukubwa Chaguomsingi',
+        phoneConnect: 'Unganisha Simu',
+        newReminder: 'Ukumbusho Mpya',
+        medReminder: 'Ukumbusho wa Dawa',
+        extraReminder: 'Ukumbusho wa Ziada',
+        aiAssistant: 'Msaidizi wa AI',
+        settings: 'Mipangilio',
+        greeting: 'Salamu',
+        meeting: 'Mkutano',
+        ticket: 'Tikiti',
+        rest: 'Pumzika',
+        encourage: 'Hamasa',
+        autoSelect: 'Chagua Kiotomatiki'
+      },
+      'ha': {
+        voiceRegion: 'Yankin Murya',
+        voiceTimbre: 'Murya',
+        size: 'Girma',
+        speed: 'Gudu',
+        pitch: 'Murya',
+        volume: 'Murya',
+        voiceOn: 'Murya: KUNNA',
+        voiceOff: 'Murya: KASHE',
+        preview: 'Duba',
+        defaultSize: 'Girma na Asali',
+        phoneConnect: 'Haɗa Wayar',
+        newReminder: 'Sabon Tunatarwa',
+        medReminder: 'Tunatarwar Magani',
+        extraReminder: 'Ƙarin Tunatarwa',
+        aiAssistant: 'Mataimakin AI',
+        settings: 'Saituna',
+        greeting: 'Gaisuwa',
+        meeting: 'Tarurruka',
+        ticket: 'Tikiti',
+        rest: 'Huta',
+        encourage: 'Karfafawa',
+        autoSelect: 'Zabar Kai'
+      },
+      'am': {
+        voiceRegion: 'የድምፅ ክልል',
+        voiceTimbre: 'ድምፅ',
+        size: 'መጠን',
+        speed: 'ፍጥነት',
+        pitch: 'ግምባር',
+        volume: 'ድምፅ',
+        voiceOn: 'ድምፅ: ክፍት',
+        voiceOff: 'ድምፅ: ዝጋ',
+        preview: 'ቅድመ ዕይታ',
+        defaultSize: 'ነባሪ መጠን',
+        phoneConnect: 'ስልክ ያገናኙ',
+        newReminder: 'አዲስ ማስታወሻ',
+        medReminder: 'የመድሃኒት ማስታወሻ',
+        extraReminder: 'ተጨማሪ ማስታወሻ',
+        aiAssistant: 'AI ረዳት',
+        settings: 'ቅንብሮች',
+        greeting: 'ሰላምታ',
+        meeting: 'ስብሰባ',
+        ticket: 'ትኬት',
+        rest: 'እረፍት',
+        encourage: 'ማበረታቻ',
+        autoSelect: 'ራስ-ሰር ምርጫ'
+      },
+      // 欧洲其他语言
+      'pl': {
+        voiceRegion: 'Region głosu',
+        voiceTimbre: 'Głos',
+        size: 'Rozmiar',
+        speed: 'Prędkość',
+        pitch: 'Ton',
+        volume: 'Głośność',
+        voiceOn: 'Głos: WŁĄCZONY',
+        voiceOff: 'Głos: WYŁĄCZONY',
+        preview: 'Podgląd',
+        defaultSize: 'Domyślny rozmiar',
+        phoneConnect: 'Połącz telefon',
+        newReminder: 'Nowe przypomnienie',
+        medReminder: 'Przypomnienie o lekach',
+        extraReminder: 'Dodatkowe przypomnienie',
+        aiAssistant: 'Asystent AI',
+        settings: 'Ustawienia',
+        greeting: 'Powitanie',
+        meeting: 'Spotkanie',
+        ticket: 'Bilet',
+        rest: 'Odpoczynek',
+        encourage: 'Zachęta',
+        autoSelect: 'Automatyczny wybór'
+      },
+      'nl': {
+        voiceRegion: 'Stemregio',
+        voiceTimbre: 'Stem',
+        size: 'Grootte',
+        speed: 'Snelheid',
+        pitch: 'Toonhoogte',
+        volume: 'Volume',
+        voiceOn: 'Stem: AAN',
+        voiceOff: 'Stem: UIT',
+        preview: 'Voorbeeld',
+        defaultSize: 'Standaard grootte',
+        phoneConnect: 'Telefoon verbinden',
+        newReminder: 'Nieuwe herinnering',
+        medReminder: 'Medicatie herinnering',
+        extraReminder: 'Extra herinnering',
+        aiAssistant: 'AI Assistent',
+        settings: 'Instellingen',
+        greeting: 'Groet',
+        meeting: 'Vergadering',
+        ticket: 'Ticket',
+        rest: 'Rust',
+        encourage: 'Aanmoediging',
+        autoSelect: 'Automatisch selecteren'
+      },
+      'sv': {
+        voiceRegion: 'Röstområde',
+        voiceTimbre: 'Röst',
+        size: 'Storlek',
+        speed: 'Hastighet',
+        pitch: 'Ton',
+        volume: 'Volym',
+        voiceOn: 'Röst: PÅ',
+        voiceOff: 'Röst: AV',
+        preview: 'Förhandsvisning',
+        defaultSize: 'Standardstorlek',
+        phoneConnect: 'Anslut telefon',
+        newReminder: 'Ny påminnelse',
+        medReminder: 'Läkemedelspåminnelse',
+        extraReminder: 'Extra påminnelse',
+        aiAssistant: 'AI-assistent',
+        settings: 'Inställningar',
+        greeting: 'Hälsning',
+        meeting: 'Möte',
+        ticket: 'Biljett',
+        rest: 'Vila',
+        encourage: 'Uppmuntran',
+        autoSelect: 'Automatiskt val'
+      },
+      'da': {
+        voiceRegion: 'Stemmeområde',
+        voiceTimbre: 'Stemme',
+        size: 'Størrelse',
+        speed: 'Hastighed',
+        pitch: 'Tone',
+        volume: 'Lydstyrke',
+        voiceOn: 'Stemme: TÆNDT',
+        voiceOff: 'Stemme: SLUKKET',
+        preview: 'Forhåndsvisning',
+        defaultSize: 'Standardstørrelse',
+        phoneConnect: 'Forbind telefon',
+        newReminder: 'Ny påmindelse',
+        medReminder: 'Medicin påmindelse',
+        extraReminder: 'Ekstra påmindelse',
+        aiAssistant: 'AI Assistent',
+        settings: 'Indstillinger',
+        greeting: 'Hilsen',
+        meeting: 'Møde',
+        ticket: 'Billet',
+        rest: 'Hvile',
+        encourage: 'Opmuntring',
+        autoSelect: 'Automatisk valg'
+      },
+      'fi': {
+        voiceRegion: 'Äänialue',
+        voiceTimbre: 'Ääni',
+        size: 'Koko',
+        speed: 'Nopeus',
+        pitch: 'Sävel',
+        volume: 'Äänenvoimakkuus',
+        voiceOn: 'Ääni: PÄÄLLÄ',
+        voiceOff: 'Ääni: POIS',
+        preview: 'Esikatselu',
+        defaultSize: 'Oletuskoko',
+        phoneConnect: 'Yhdistä puhelin',
+        newReminder: 'Uusi muistutus',
+        medReminder: 'Lääkemuistutus',
+        extraReminder: 'Lisämuistutus',
+        aiAssistant: 'AI-avustaja',
+        settings: 'Asetukset',
+        greeting: 'Tervehdys',
+        meeting: 'Kokous',
+        ticket: 'Lippu',
+        rest: 'Lepo',
+        encourage: 'Kannustus',
+        autoSelect: 'Automaattinen valinta'
+      },
+      'nb': {
+        voiceRegion: 'Stemmeområde',
+        voiceTimbre: 'Stemme',
+        size: 'Størrelse',
+        speed: 'Hastighet',
+        pitch: 'Tone',
+        volume: 'Volum',
+        voiceOn: 'Stemme: PÅ',
+        voiceOff: 'Stemme: AV',
+        preview: 'Forhåndsvisning',
+        defaultSize: 'Standard størrelse',
+        phoneConnect: 'Koble til telefon',
+        newReminder: 'Ny påminnelse',
+        medReminder: 'Medisin påminnelse',
+        extraReminder: 'Ekstra påminnelse',
+        aiAssistant: 'AI Assistent',
+        settings: 'Innstillinger',
+        greeting: 'Hilsen',
+        meeting: 'Møte',
+        ticket: 'Billett',
+        rest: 'Hvile',
+        encourage: 'Oppmuntring',
+        autoSelect: 'Automatisk valg'
+      },
+      'cs': {
+        voiceRegion: 'Hlasový region',
+        voiceTimbre: 'Hlas',
+        size: 'Velikost',
+        speed: 'Rychlost',
+        pitch: 'Tón',
+        volume: 'Hlasitost',
+        voiceOn: 'Hlas: ZAPNUTÝ',
+        voiceOff: 'Hlas: VYPNUTÝ',
+        preview: 'Náhled',
+        defaultSize: 'Výchozí velikost',
+        phoneConnect: 'Připojit telefon',
+        newReminder: 'Nové připomenutí',
+        medReminder: 'Připomenutí léků',
+        extraReminder: 'Další připomenutí',
+        aiAssistant: 'AI asistent',
+        settings: 'Nastavení',
+        greeting: 'Pozdrav',
+        meeting: 'Schůzka',
+        ticket: 'Lístek',
+        rest: 'Odpočinek',
+        encourage: 'Povzbuzení',
+        autoSelect: 'Automatický výběr'
+      },
+      'sk': {
+        voiceRegion: 'Hlasový región',
+        voiceTimbre: 'Hlas',
+        size: 'Veľkosť',
+        speed: 'Rýchlosť',
+        pitch: 'Tón',
+        volume: 'Hlasitosť',
+        voiceOn: 'Hlas: ZAPNUTÝ',
+        voiceOff: 'Hlas: VYPNUTÝ',
+        preview: 'Náhľad',
+        defaultSize: 'Predvolená veľkosť',
+        phoneConnect: 'Pripojiť telefón',
+        newReminder: 'Nové pripomenutie',
+        medReminder: 'Pripomenutie liekov',
+        extraReminder: 'Ďalšie pripomenutie',
+        aiAssistant: 'AI asistent',
+        settings: 'Nastavenia',
+        greeting: 'Pozdrav',
+        meeting: 'Stretnutie',
+        ticket: 'Lístok',
+        rest: 'Odpočinok',
+        encourage: 'Povzbudenie',
+        autoSelect: 'Automatický výber'
+      },
+      'hu': {
+        voiceRegion: 'Hang régió',
+        voiceTimbre: 'Hang',
+        size: 'Méret',
+        speed: 'Sebesség',
+        pitch: 'Hangmagasság',
+        volume: 'Hangerő',
+        voiceOn: 'Hang: BE',
+        voiceOff: 'Hang: KI',
+        preview: 'Előnézet',
+        defaultSize: 'Alapértelmezett méret',
+        phoneConnect: 'Telefon csatlakoztatás',
+        newReminder: 'Új emlékeztető',
+        medReminder: 'Gyógyszer emlékeztető',
+        extraReminder: 'További emlékeztető',
+        aiAssistant: 'AI asszisztens',
+        settings: 'Beállítások',
+        greeting: 'Üdvözlés',
+        meeting: 'Találkozó',
+        ticket: 'Jegy',
+        rest: 'Pihenés',
+        encourage: 'Bátorítás',
+        autoSelect: 'Automatikus kiválasztás'
+      },
+      'ro': {
+        voiceRegion: 'Regiune voce',
+        voiceTimbre: 'Voce',
+        size: 'Dimensiune',
+        speed: 'Viteză',
+        pitch: 'Ton',
+        volume: 'Volum',
+        voiceOn: 'Voce: PORNIT',
+        voiceOff: 'Voce: OPRIT',
+        preview: 'Previzualizare',
+        defaultSize: 'Dimensiune implicită',
+        phoneConnect: 'Conectează telefonul',
+        newReminder: 'Memento nou',
+        medReminder: 'Memento medicament',
+        extraReminder: 'Memento suplimentar',
+        aiAssistant: 'Asistent AI',
+        settings: 'Setări',
+        greeting: 'Salut',
+        meeting: 'Întâlnire',
+        ticket: 'Bilet',
+        rest: 'Odihnă',
+        encourage: 'Încurajare',
+        autoSelect: 'Selectare automată'
+      },
+      'bg': {
+        voiceRegion: 'Гласов регион',
+        voiceTimbre: 'Глас',
+        size: 'Размер',
+        speed: 'Скорост',
+        pitch: 'Тон',
+        volume: 'Сила на звука',
+        voiceOn: 'Глас: ВКЛЮЧЕН',
+        voiceOff: 'Глас: ИЗКЛЮЧЕН',
+        preview: 'Преглед',
+        defaultSize: 'Размер по подразбиране',
+        phoneConnect: 'Свържи телефон',
+        newReminder: 'Ново напомняне',
+        medReminder: 'Напомняне за лекарства',
+        extraReminder: 'Допълнително напомняне',
+        aiAssistant: 'AI асистент',
+        settings: 'Настройки',
+        greeting: 'Поздрав',
+        meeting: 'Среща',
+        ticket: 'Билет',
+        rest: 'Почивка',
+        encourage: 'Насърчение',
+        autoSelect: 'Автоматичен избор'
+      },
+      'hr': {
+        voiceRegion: 'Glasovna regija',
+        voiceTimbre: 'Glas',
+        size: 'Veličina',
+        speed: 'Brzina',
+        pitch: 'Ton',
+        volume: 'Glasnoća',
+        voiceOn: 'Glas: UKLJUČEN',
+        voiceOff: 'Glas: ISKLJUČEN',
+        preview: 'Pregled',
+        defaultSize: 'Zadana veličina',
+        phoneConnect: 'Poveži telefon',
+        newReminder: 'Novi podsjetnik',
+        medReminder: 'Podsjetnik za lijekove',
+        extraReminder: 'Dodatni podsjetnik',
+        aiAssistant: 'AI asistent',
+        settings: 'Postavke',
+        greeting: 'Pozdrav',
+        meeting: 'Sastanak',
+        ticket: 'Ulaznica',
+        rest: 'Odmor',
+        encourage: 'Ohrabrenje',
+        autoSelect: 'Automatski odabir'
+      },
+      'sr': {
+        voiceRegion: 'Гласовни регион',
+        voiceTimbre: 'Глас',
+        size: 'Величина',
+        speed: 'Брзина',
+        pitch: 'Тон',
+        volume: 'Јачина звука',
+        voiceOn: 'Глас: УКЉУЧЕН',
+        voiceOff: 'Глас: ИСКЉУЧЕН',
+        preview: 'Преглед',
+        defaultSize: 'Подразумевана величина',
+        phoneConnect: 'Повежи телефон',
+        newReminder: 'Нови подсетник',
+        medReminder: 'Подсетник за лекове',
+        extraReminder: 'Додатни подсетник',
+        aiAssistant: 'AI асистент',
+        settings: 'Подешавања',
+        greeting: 'Поздрав',
+        meeting: 'Састанак',
+        ticket: 'Карта',
+        rest: 'Одмор',
+        encourage: 'Охрабрење',
+        autoSelect: 'Аутоматски избор'
+      },
+      'sl': {
+        voiceRegion: 'Glasovna regija',
+        voiceTimbre: 'Glas',
+        size: 'Velikost',
+        speed: 'Hitrost',
+        pitch: 'Ton',
+        volume: 'Glasnost',
+        voiceOn: 'Glas: VKLOPLJEN',
+        voiceOff: 'Glas: IZKLOPLJEN',
+        preview: 'Predogled',
+        defaultSize: 'Privzeta velikost',
+        phoneConnect: 'Poveži telefon',
+        newReminder: 'Nov opomnik',
+        medReminder: 'Opomnik za zdravila',
+        extraReminder: 'Dodaten opomnik',
+        aiAssistant: 'AI asistent',
+        settings: 'Nastavitve',
+        greeting: 'Pozdrav',
+        meeting: 'Sestanek',
+        ticket: 'Vstopnica',
+        rest: 'Počitek',
+        encourage: 'Spodbuda',
+        autoSelect: 'Samodejni izbor'
+      },
+      'el': {
+        voiceRegion: 'Περιοχή φωνής',
+        voiceTimbre: 'Φωνή',
+        size: 'Μέγεθος',
+        speed: 'Ταχύτητα',
+        pitch: 'Τόνος',
+        volume: 'Ένταση',
+        voiceOn: 'Φωνή: ΕΝΕΡΓΗ',
+        voiceOff: 'Φωνή: ΑΝΕΝΕΡΓΗ',
+        preview: 'Προεπισκόπηση',
+        defaultSize: 'Προεπιλεγμένο μέγεθος',
+        phoneConnect: 'Σύνδεση τηλεφώνου',
+        newReminder: 'Νέα υπενθύμιση',
+        medReminder: 'Υπενθύμιση φαρμάκου',
+        extraReminder: 'Επιπλέον υπενθύμιση',
+        aiAssistant: 'Βοηθός AI',
+        settings: 'Ρυθμίσεις',
+        greeting: 'Χαιρετισμός',
+        meeting: 'Συνάντηση',
+        ticket: 'Εισιτήριο',
+        rest: 'Ξεκούραση',
+        encourage: 'Ενθάρρυνση',
+        autoSelect: 'Αυτόματη επιλογή'
+      },
+      'uk': {
+        voiceRegion: 'Регіон голосу',
+        voiceTimbre: 'Голос',
+        size: 'Розмір',
+        speed: 'Швидкість',
+        pitch: 'Тон',
+        volume: 'Гучність',
+        voiceOn: 'Голос: УВІМКНЕНО',
+        voiceOff: 'Голос: ВИМКНЕНО',
+        preview: 'Попередній перегляд',
+        defaultSize: 'Розмір за замовчуванням',
+        phoneConnect: 'Підключити телефон',
+        newReminder: 'Нове нагадування',
+        medReminder: 'Нагадування про ліки',
+        extraReminder: 'Додаткове нагадування',
+        aiAssistant: 'AI помічник',
+        settings: 'Налаштування',
+        greeting: 'Привітання',
+        meeting: 'Зустріч',
+        ticket: 'Квиток',
+        rest: 'Відпочинок',
+        encourage: 'Заохочення',
+        autoSelect: 'Автоматичний вибір'
+      },
+      'et': {
+        voiceRegion: 'Hääle piirkond',
+        voiceTimbre: 'Hääl',
+        size: 'Suurus',
+        speed: 'Kiirus',
+        pitch: 'Toon',
+        volume: 'Helitugevus',
+        voiceOn: 'Hääl: SEES',
+        voiceOff: 'Hääl: VÄLJAS',
+        preview: 'Eelvaade',
+        defaultSize: 'Vaikesuurus',
+        phoneConnect: 'Ühenda telefon',
+        newReminder: 'Uus meeldetuletus',
+        medReminder: 'Ravimi meeldetuletus',
+        extraReminder: 'Lisameeldetuletus',
+        aiAssistant: 'AI assistent',
+        settings: 'Seaded',
+        greeting: 'Tervitus',
+        meeting: 'Koosolek',
+        ticket: 'Pilet',
+        rest: 'Puhkus',
+        encourage: 'Julgustus',
+        autoSelect: 'Automaatne valik'
+      },
+      'lv': {
+        voiceRegion: 'Balss reģions',
+        voiceTimbre: 'Balss',
+        size: 'Izmērs',
+        speed: 'Ātrums',
+        pitch: 'Tonis',
+        volume: 'Skaļums',
+        voiceOn: 'Balss: IESLĒGTS',
+        voiceOff: 'Balss: IZSLĒGTS',
+        preview: 'Priekšskatījums',
+        defaultSize: 'Noklusējuma izmērs',
+        phoneConnect: 'Savienot tālruni',
+        newReminder: 'Jauns atgādinājums',
+        medReminder: 'Zāļu atgādinājums',
+        extraReminder: 'Papildu atgādinājums',
+        aiAssistant: 'AI asistents',
+        settings: 'Iestatījumi',
+        greeting: 'Sveiciens',
+        meeting: 'Sanāksme',
+        ticket: 'Biļete',
+        rest: 'Atpūta',
+        encourage: 'Iedrošinājums',
+        autoSelect: 'Automātiskā izvēle'
+      },
+      'lt': {
+        voiceRegion: 'Balso regionas',
+        voiceTimbre: 'Balsas',
+        size: 'Dydis',
+        speed: 'Greitis',
+        pitch: 'Tonas',
+        volume: 'Garsumas',
+        voiceOn: 'Balsas: ĮJUNGTAS',
+        voiceOff: 'Balsas: IŠJUNGTAS',
+        preview: 'Peržiūra',
+        defaultSize: 'Numatytasis dydis',
+        phoneConnect: 'Prijungti telefoną',
+        newReminder: 'Naujas priminimas',
+        medReminder: 'Vaistų priminimas',
+        extraReminder: 'Papildomas priminimas',
+        aiAssistant: 'AI asistentas',
+        settings: 'Nustatymai',
+        greeting: 'Pasisveikinimas',
+        meeting: 'Susitikimas',
+        ticket: 'Bilietas',
+        rest: 'Poilsis',
+        encourage: 'Paskatinimas',
+        autoSelect: 'Automatinis pasirinkimas'
+      }
+    };
+
+    // 更新 UI 语言 - 完整版本
+    function updateUILanguage() {
+      const region = localStorage.getItem('voice_region') || 'auto';
+      const langKey = getCurrentLangKey();
+      const langPrefix = region !== 'auto' ? region.split('-')[0] : 'zh';
+      
+      // 更新设置面板标签
+      const labels = document.querySelectorAll('.setting-line label');
+      const labelKeys = ['voiceRegion', 'voiceTimbre', 'size', 'speed', 'pitch', 'volume'];
+      labels.forEach((label, i) => {
+        if (labelKeys[i]) {
+          label.textContent = t(labelKeys[i]);
+        }
+      });
+      
+      // 更新语音开关按钮
+      const voiceToggleBtn = document.getElementById('voiceToggleBtn');
+      if (voiceToggleBtn) {
+        voiceToggleBtn.textContent = voiceSettings.enabled ? t('voiceOn') : t('voiceOff');
+      }
+      
+      // 通过 onclick 属性精确匹配按钮
+      const allBtns = document.querySelectorAll('button');
+      allBtns.forEach(btn => {
+        const onclick = btn.getAttribute('onclick') || '';
+        
+        if (onclick === 'previewVoice()') btn.textContent = t('preview');
+        if (onclick === 'resetAvatarSize()') btn.textContent = t('defaultSize');
+        if (onclick === 'toggleMobilePanel()') btn.textContent = t('phoneConnect');
+        if (onclick === 'createDesktopReminder()') btn.textContent = t('newReminder');
+        if (onclick === 'toggleMedPanel()') btn.textContent = t('medReminder');
+        if (onclick === 'toggleRemindPanel()') btn.textContent = t('extraReminder');
+        if (onclick === 'toggleAiChat()') btn.textContent = t('aiAssistant');
+        if (onclick === "demoSpeak('greeting')") btn.textContent = t('greeting');
+        if (onclick === "demoSpeak('meeting')") btn.textContent = t('meeting');
+        if (onclick === "demoSpeak('ticket')") btn.textContent = t('ticket');
+        if (onclick === "demoSpeak('rest')") btn.textContent = t('rest');
+        if (onclick === "demoSpeak('encouragement')") btn.textContent = t('encourage');
+        if (onclick === 'toggleSettings()') btn.textContent = t('settings');
+      });
+      
+      // 更新面板标题
+      const medTitle = document.querySelector('#medPanel h3');
+      if (medTitle) medTitle.childNodes[0].textContent = t('medReminder') + ' ';
+      
+      const remindTitle = document.querySelector('#remindPanel h3');
+      if (remindTitle) remindTitle.textContent = t('extraReminder');
+      
+      const aiTitle = document.querySelector('#aiChatPanel h3');
+      if (aiTitle) {
+        const span = aiTitle.querySelector('span');
+        aiTitle.childNodes[0].textContent = t('aiAssistant') + ' ';
+        if (span) span.textContent = '(DeepSeek V3)';
+      }
+      
+      // 更新输入框占位符
+      const medInput = document.getElementById('medNlInput');
+      if (medInput) medInput.placeholder = t('medPlaceholder');
+      
+      const remindInput = document.getElementById('remindNlInput');
+      if (remindInput) remindInput.placeholder = t('remindPlaceholder');
+      
+      const aiInput = document.getElementById('aiChatInput');
+      if (aiInput) aiInput.placeholder = t('aiPlaceholder');
+      
+      // 更新手机连接面板
+      const mobileTitle = document.querySelector('#mobilePanel span[style*="font-weight: bold"]');
+      if (mobileTitle) mobileTitle.textContent = t('phoneConnect');
+      
+      // 更新空状态文字
+      const remindEmpty = document.querySelector('#remindPanel .remind-empty');
+      if (remindEmpty) remindEmpty.textContent = t('noReminders');
+    }
+
+    // 翻译提醒弹窗
+    function translateReminderModal() {
+      const modal = document.getElementById('reminderModal');
+      if (!modal) return;
+      
+      modal.querySelector('.reminder-modal-title').textContent = t('newReminder');
+      
+      const labels = modal.querySelectorAll('.reminder-form-group label');
+      if (labels[0]) labels[0].textContent = t('reminderTitle');
+      if (labels[1]) labels[1].textContent = t('reminderTime');
+      if (labels[2]) labels[2].textContent = t('reminderType');
+      if (labels[3]) labels[3].textContent = t('reminderNote');
+      
+      document.getElementById('modalReminderTitle').placeholder = t('titlePlaceholder');
+      document.getElementById('modalReminderNote').placeholder = t('notePlaceholder');
+      
+      const typeSelect = document.getElementById('modalReminderType');
+      const typeOptions = typeSelect.querySelectorAll('option');
+      const types = t('reminderTypes');
+      if (Array.isArray(types)) {
+        types.forEach((typeName, i) => {
+          if (typeOptions[i]) typeOptions[i].textContent = typeName;
+        });
+      }
+      
+      modal.querySelector('.btn-cancel').textContent = t('cancel');
+      modal.querySelector('.btn-save').textContent = t('save');
+    }
+
+    // 翻译用药提醒面板
+    function translateMedPanel() {
+      const panel = document.getElementById('medPanel');
+      if (!panel) return;
+      
+      const title = panel.querySelector('h3');
+      if (title) title.childNodes[0].textContent = t('medReminder') + ' ';
+      
+      const quickAdd = panel.querySelector('#medTemplates > div:first-child');
+      if (quickAdd) quickAdd.textContent = t('quickAddMeds');
+      
+      const templateBtns = panel.querySelectorAll('#medTemplates .template-btn span');
+      const diseases = [t('diabetes'), t('hypertension'), t('cholesterol'), t('thyroid'), t('heart'), t('custom')];
+      templateBtns.forEach((btn, i) => {
+        if (diseases[i]) btn.textContent = diseases[i];
+      });
+      
+      const medInput = document.getElementById('medNlInput');
+      if (medInput) medInput.placeholder = t('medPlaceholder');
+      
+      const setBtn = panel.querySelector('.med-nl-input button:last-child');
+      if (setBtn) setBtn.textContent = t('set');
+    }
+
+
     function pickMessage(type = 'greeting') {
+      const region = localStorage.getItem('voice_region') || 'auto';
+      const langPrefix = region !== 'auto' ? region.split('-')[0] : 'zh';
+      
+      // 尝试获取对应语言的消息
+      const langMessages = messagesByLang[langPrefix];
+      if (langMessages && langMessages[type]) {
+        const list = langMessages[type];
+        return list[Math.floor(Math.random() * list.length)];
+      }
+      
+      // 默认使用中文消息
       const list = messages[type] || messages.greeting;
       return list[Math.floor(Math.random() * list.length)];
     }
@@ -957,15 +3955,33 @@
 
     function fillVoiceOptions() {
       const current = voiceSettings.voiceName || 'auto';
-      voiceSelect.innerHTML = '<option value="auto">自动选择甜美中文音</option>';
-      availableVoices
-        .filter(v => /zh|cmn|yue|Chinese|中文/i.test(`${v.lang} ${v.name}`))
-        .forEach(v => {
-          const option = document.createElement('option');
-          option.value = v.name;
-          option.textContent = `${v.name} / ${v.lang}`;
-          voiceSelect.appendChild(option);
-        });
+      const region = localStorage.getItem('voice_region') || 'auto';
+      
+      // 根据区域筛选语音
+      let filteredVoices = availableVoices;
+      let defaultLabel = '自动选择甜美中文音';
+      
+      if (region !== 'auto') {
+        const langPrefix = region.split('-')[0];
+        filteredVoices = availableVoices.filter(v => 
+        v.lang.startsWith(langPrefix) || v.lang.startsWith(region)
+        );
+        const regionNames = {
+        'zh-CN': '中文', 'zh-TW': '中文繁体', 'en-US': '英语', 'en-GB': '英语',
+        'ja-JP': '日语', 'ko-KR': '韩语', 'fr-FR': '法语', 'de-DE': '德语',
+        'es-ES': '西班牙语', 'it-IT': '意大利语', 'ru-RU': '俄语', 'pt-BR': '葡萄牙语',
+        'ar-SA': '阿拉伯语', 'th-TH': '泰语', 'vi-VN': '越南语'
+        };
+        defaultLabel = `自动选择${regionNames[region] || region}音`;
+      }
+      
+      voiceSelect.innerHTML = `<option value="auto">${defaultLabel}</option>`;
+      filteredVoices.forEach(v => {
+        const option = document.createElement('option');
+        option.value = v.name;
+        option.textContent = `${v.name} / ${v.lang}`;
+        voiceSelect.appendChild(option);
+      });
       voiceSelect.value = current;
     }
 
@@ -975,11 +3991,46 @@
         selectedVoice = availableVoices.find(v => v.name === voiceSettings.voiceName) || null;
         if (selectedVoice) return;
       }
-      const preferred = ['Sandy', 'Flo', 'Shelley', '婷婷', 'Tingting', '美佳', 'Meijia', '晓晓', 'Xiaoxiao', 'Xiaoyi'];
-      selectedVoice = preferred.map(name => availableVoices.find(v => v.name.includes(name))).find(Boolean)
-        || availableVoices.find(v => /zh|cmn|yue/i.test(v.lang))
-        || availableVoices[0]
-        || null;
+      
+      const region = localStorage.getItem('voice_region') || 'auto';
+      const langPrefix = region !== 'auto' ? region.split('-')[0] : 'zh';
+      
+      // 根据区域选择对应语言的首选音色
+      const preferredByLang = {
+        'zh': ['Sandy', 'Flo', 'Shelley', '婷婷', 'Tingting', '美佳', 'Meijia', '晓晓', 'Xiaoxiao', 'Xiaoyi'],
+        'en': ['Samantha', 'Karen', 'Victoria', 'Daniel', 'Google US English', 'Microsoft'],
+        'ja': ['Kyoko', 'Otoya', 'Google 日本語', 'Microsoft'],
+        'ko': ['Yuna', 'Google 한국의', 'Microsoft'],
+        'fr': ['Thomas', 'Amelie', 'Google français', 'Microsoft'],
+        'de': ['Anna', 'Hans', 'Google Deutsch', 'Microsoft'],
+        'es': ['Monica', 'Diego', 'Google español', 'Microsoft'],
+        'it': ['Alice', 'Luca', 'Google italiano', 'Microsoft'],
+        'ru': ['Milena', 'Yuri', 'Google русский', 'Microsoft'],
+        'pt': ['Luciana', 'Joana', 'Google português', 'Microsoft'],
+        'ar': ['Laila', 'Majed', 'Google العربية', 'Microsoft'],
+        'th': ['Kanya', 'Google ไทย', 'Microsoft'],
+        'vi': ['Linh', 'Google Tiếng Việt', 'Microsoft']
+      };
+      
+      const preferred = preferredByLang[langPrefix] || preferredByLang['zh'];
+      
+      // 先尝试找匹配区域的语音
+      if (region !== 'auto') {
+        selectedVoice = preferred.map(name => 
+        availableVoices.find(v => v.name.includes(name) && (v.lang.startsWith(langPrefix) || v.lang.startsWith(region)))
+        ).find(Boolean)
+        || availableVoices.find(v => v.lang.startsWith(region))
+        || availableVoices.find(v => v.lang.startsWith(langPrefix));
+      } else {
+        // 自动模式：默认中文
+        selectedVoice = preferred.map(name => availableVoices.find(v => v.name.includes(name))).find(Boolean)
+        || availableVoices.find(v => /zh|cmn|yue/i.test(v.lang));
+      }
+      
+      // 最后 fallback
+      if (!selectedVoice) {
+        selectedVoice = availableVoices[0] || null;
+      }
     }
 
     function speak(text, options = {}) {
@@ -991,13 +4042,18 @@
       window.speechSynthesis.cancel();
       loadVoices();
       const u = new SpeechSynthesisUtterance(finalText);
-      u.lang = 'zh-CN';
+      
+      // 根据当前区域设置默认语言
+      const region = localStorage.getItem('voice_region') || 'auto';
+      const defaultLang = region !== 'auto' ? region : 'zh-CN';
+      u.lang = defaultLang;
+      
       u.rate = Number(voiceSettings.rate);
       u.pitch = Number(voiceSettings.pitch);
       u.volume = Number(voiceSettings.volume);
       if (selectedVoice) {
         u.voice = selectedVoice;
-        u.lang = selectedVoice.lang || 'zh-CN';
+        u.lang = selectedVoice.lang || defaultLang;
       }
       u.onstart = () => setAvatarState('speaking');
       u.onend = () => { setAvatarState(options.afterState || 'idle'); hideBubble(2500); };
@@ -1027,6 +4083,288 @@
       if (voiceSettings.enabled) previewVoice();
     }
 
+    function formatReminderTime(value) {
+      if (!value) return '未设时间';
+      const date = new Date(value);
+      if (!Number.isNaN(date.getTime())) {
+        return `${date.getMonth() + 1}月${date.getDate()}日 ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+      }
+      return value;
+    }
+
+    function renderReminderMiniList(reminders = []) {
+      if (!reminderMiniList) return;
+      if (!reminders.length) {
+        reminderMiniList.innerHTML = '<div class="reminder-mini-item">暂无提醒，手机端新建后会同步到这里。</div>';
+        return;
+      }
+      reminderMiniList.innerHTML = reminders.slice(0, 4).map(item => `
+        <div class="reminder-mini-item">${item.done ? '✓ ' : '• '}${formatReminderTime(item.time)} ${item.title || '提醒'}</div>
+      `).join('');
+    }
+
+    async function refreshRemindersFromDesktop() {
+      if (!ipcRenderer) return;
+      try {
+        const reminders = await ipcRenderer.invoke('get-reminders');
+        renderReminderMiniList(reminders || []);
+      } catch (error) {
+        console.warn('获取提醒列表失败：', error);
+      }
+    }
+
+    async function loadMobileConnection() {
+      if (!ipcRenderer) {
+        mobileUrlText.textContent = '当前不是 Electron 环境，无法读取本地 API 地址。';
+        return;
+      }
+      try {
+        const info = await ipcRenderer.invoke('get-mobile-connection');
+        mobileUrlText.textContent = info.mobileUrl;
+        mobileQr.src = info.qrUrl;
+        mobilePairText.textContent = `配对码：${info.pairCode}｜端口：${info.port}`;
+      } catch (error) {
+        mobileUrlText.textContent = '生成手机连接失败：' + error.message;
+      }
+    }
+
+    function toggleMobilePanel() {
+      const willShow = !mobilePanel.classList.contains('show');
+      mobilePanel.classList.toggle('show', willShow);
+      if (willShow) {
+        loadMobileConnection();
+        refreshRemindersFromDesktop();
+      }
+    }
+
+    // 语音输入相关变量
+    let isRecording = false;
+    let recognition = null;
+
+    function toggleVoiceInput() {
+      const btn = document.getElementById('voiceInputBtn');
+      const input = document.getElementById('modalReminderTitle');
+      
+      if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        speakAndShow('抱歉，你的浏览器不支持语音输入功能。', { state: 'alert' });
+        return;
+      }
+
+      if (isRecording) {
+        stopVoiceInput();
+        return;
+      }
+
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognition = new SpeechRecognition();
+      
+      // 根据当前语音区域设置语言
+      const region = localStorage.getItem('voice_region') || 'auto';
+      if (region !== 'auto') {
+        recognition.lang = region;
+      } else {
+        recognition.lang = 'zh-CN';
+      }
+      
+      recognition.continuous = false;
+      recognition.interimResults = true;
+
+      recognition.onstart = () => {
+        isRecording = true;
+        btn.classList.add('recording');
+        btn.title = '点击停止';
+        speakAndShow('我在听，请说...', { state: 'happy' });
+      };
+
+      recognition.onresult = (event) => {
+        const transcript = Array.from(event.results)
+        .map(result => result[0].transcript)
+        .join('');
+        input.value = transcript;
+      };
+
+      recognition.onend = () => {
+        stopVoiceInput();
+      };
+
+      recognition.onerror = (event) => {
+        console.warn('语音识别错误:', event.error);
+        stopVoiceInput();
+        if (event.error === 'no-speech') {
+        speakAndShow('没有听到声音，请再试一次。', { state: 'thinking' });
+        } else if (event.error === 'not-allowed') {
+        speakAndShow('请允许麦克风权限后再试。', { state: 'alert' });
+        }
+      };
+
+      recognition.start();
+    }
+
+    function stopVoiceInput() {
+      const btn = document.getElementById('voiceInputBtn');
+      isRecording = false;
+      btn.classList.remove('recording');
+      btn.title = '语音输入';
+      if (recognition) {
+        recognition.stop();
+        recognition = null;
+      }
+    }
+
+    // 通用语音输入函数，支持任意输入框
+    let currentVoiceBtn = null;
+    
+    function toggleVoiceInputFor(inputId) {
+      const input = document.getElementById(inputId);
+      if (!input) return;
+      
+      // 找到对应的语音按钮
+      const btn = input.parentElement.querySelector('.voice-input-btn');
+      
+      if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        speakAndShow('抱歉，你的浏览器不支持语音输入功能。', { state: 'alert' });
+        return;
+      }
+
+      if (isRecording && currentVoiceBtn === btn) {
+        stopVoiceInputFor(btn);
+        return;
+      }
+
+      // 停止之前的录音
+      if (isRecording) {
+        stopVoiceInputFor(currentVoiceBtn);
+      }
+
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognition = new SpeechRecognition();
+      
+      // 根据当前语音区域设置语言
+      const region = localStorage.getItem('voice_region') || 'auto';
+      recognition.lang = region !== 'auto' ? region : 'zh-CN';
+      
+      recognition.continuous = false;
+      recognition.interimResults = true;
+
+      recognition.onstart = () => {
+        isRecording = true;
+        currentVoiceBtn = btn;
+        if (btn) {
+          btn.classList.add('recording');
+          btn.title = '点击停止';
+        }
+        speakAndShow('我在听，请说...', { state: 'happy' });
+      };
+
+      recognition.onresult = (event) => {
+        const transcript = Array.from(event.results)
+          .map(result => result[0].transcript)
+          .join('');
+        input.value = transcript;
+      };
+
+      recognition.onend = () => {
+        stopVoiceInputFor(btn);
+      };
+
+      recognition.onerror = (event) => {
+        console.warn('语音识别错误:', event.error);
+        stopVoiceInputFor(btn);
+        if (event.error === 'no-speech') {
+          speakAndShow('没有听到声音，请再试一次。', { state: 'thinking' });
+        } else if (event.error === 'not-allowed') {
+          speakAndShow('请允许麦克风权限后再试。', { state: 'alert' });
+        }
+      };
+
+      recognition.start();
+    }
+
+    function stopVoiceInputFor(btn) {
+      isRecording = false;
+      currentVoiceBtn = null;
+      if (btn) {
+        btn.classList.remove('recording');
+        btn.title = '语音输入';
+      }
+      if (recognition) {
+        recognition.stop();
+        recognition = null;
+      }
+    }
+
+    // 翻译提醒弹窗内容
+    function openReminderModal() {
+      const modal = document.getElementById('reminderModal');
+      modal.classList.add('active');
+      // 清空表单
+      document.getElementById('modalReminderTitle').value = '';
+      document.getElementById('modalReminderTime').value = '';
+      document.getElementById('modalReminderType').value = '日程';
+      document.getElementById('modalReminderNote').value = '';
+      // 翻译弹窗内容
+      translateReminderModal();
+      // 聚焦标题输入
+      setTimeout(() => document.getElementById('modalReminderTitle').focus(), 100);
+    }
+
+    function closeReminderModal() {
+      const modal = document.getElementById('reminderModal');
+      modal.classList.remove('active');
+      stopVoiceInput();
+    }
+
+    async function saveReminderFromModal() {
+      const title = document.getElementById('modalReminderTitle').value.trim();
+      const time = document.getElementById('modalReminderTime').value;
+      const type = document.getElementById('modalReminderType').value;
+      const note = document.getElementById('modalReminderNote').value.trim();
+
+      if (!title) {
+        speakAndShow('请输入提醒标题哦。', { state: 'thinking' });
+        document.getElementById('modalReminderTitle').focus();
+        return;
+      }
+
+      if (!ipcRenderer) {
+        // 非 Electron 环境，保存到本地
+        const reminder = {
+        id: Date.now(),
+        title: title,
+        time: time || '',
+        type: type,
+        note: note || '从桌面端小精灵面板创建',
+        done: false,
+        createdAt: new Date().toISOString()
+        };
+        let localReminders = JSON.parse(localStorage.getItem('extra_reminders') || '[]');
+        localReminders.push(reminder);
+        localStorage.setItem('extra_reminders', JSON.stringify(localReminders));
+        closeReminderModal();
+        speakAndShow(`已新建${type}提醒：${title}`, { state: 'happy' });
+        refreshRemindList();
+        return;
+      }
+
+      try {
+        const reminders = await ipcRenderer.invoke('save-reminder', { 
+        title, 
+        time: time || '', 
+        type: type, 
+        note: note || '从桌面端小精灵面板创建' 
+        });
+        renderReminderMiniList(reminders || []);
+        closeReminderModal();
+        speakAndShow(`已新建${type}提醒：${title}`, { state: 'happy' });
+      } catch (error) {
+        speakAndShow('保存提醒失败，请稍后再试。', { state: 'alert' });
+      }
+    }
+
+    async function createDesktopReminder() {
+      openReminderModal();
+    }
+
     function bindSettings() {
       sizeRange.addEventListener('input', () => { voiceSettings.avatarScale = Number(sizeRange.value); applyAvatarSize(); });
       rateRange.addEventListener('input', () => { voiceSettings.rate = Number(rateRange.value); saveSettings(); syncSettingsUI(); });
@@ -1045,9 +4383,8 @@
 
     function sendDragEvent(channel) {
       try {
-        if (window.require) {
-          const { ipcRenderer } = window.require('electron');
-          ipcRenderer.send(channel);
+        if (ipcRenderer) {
+        ipcRenderer.send(channel);
         }
       } catch (error) {
         console.warn('拖动窗口通信失败：', error);
@@ -1063,7 +4400,7 @@
       clearTimeout(controlsHideTimer);
       controlsHideTimer = setTimeout(() => {
         if (!panel.classList.contains('show') && !draggingAvatar) {
-          document.body.classList.remove('controls-visible');
+        document.body.classList.remove('controls-visible');
         }
       }, 650);
     }
@@ -1117,13 +4454,1410 @@
 
     bindSettings();
     syncSettingsUI();
+    updateUILanguage(); // 初始化 UI 语言
     setAvatarTheme(voiceSettings.avatarTheme || 'bear', false);
+    loadMobileConnection();
+    refreshRemindersFromDesktop();
+    if (ipcRenderer) {
+      ipcRenderer.on('reminders-updated', (_event, payload) => {
+        renderReminderMiniList((payload && payload.reminders) || []);
+      });
+    }
 
     setTimeout(() => {
       speakAndShow('我变成软软的小精灵啦，今天也会陪着你。', { state: 'happy' });
     }, 700);
 
-    window.AuraDeskAvatar = {
+    
+    const MED_API_BASE = 'http://127.0.0.1:8799';
+    const medPanel = document.getElementById('medPanel');
+    const medVoiceSelect = document.getElementById('medVoiceSelect');
+
+    async function medApi(path, options = {}) {
+      try {
+        const res = await fetch(MED_API_BASE + path, {
+          ...options,
+          headers: { 'Content-Type': 'application/json', ...(options.headers || {}) }
+        });
+        return await res.json();
+      } catch (e) {
+        console.warn('[用药模块] API 不可用:', e.message);
+        return null;
+      }
+    }
+
+    // 慢病用药模板数据
+    const diseaseTemplates = {
+      diabetes: {
+        title: '糖尿病用药模板',
+        templates: [
+          {
+            name: '二甲双胍',
+            detail: '餐中或餐后服用，减少胃肠不适',
+            schedule: '每天早中晚餐时各一片(500mg)',
+            tips: '注意监测血糖，避免低血糖'
+          },
+          {
+            name: '格列美脲',
+            detail: '早餐前服用，促进胰岛素分泌',
+            schedule: '每天早餐前1片(2mg)',
+            tips: '注意低血糖症状，随身携带糖果'
+          },
+          {
+            name: '阿卡波糖',
+            detail: '随第一口饭嚼服，延缓碳水吸收',
+            schedule: '每天三餐随第一口饭各1片(50mg)',
+            tips: '可能出现胀气，逐渐加量'
+          },
+          {
+            name: '胰岛素(基础)',
+            detail: '长效胰岛素，控制空腹血糖',
+            schedule: '每晚睡前注射1次',
+            tips: '注射部位轮换，注意低血糖'
+          },
+          {
+            name: '血糖监测',
+            detail: '定期监测血糖水平',
+            schedule: '每天早起空腹+三餐后2小时',
+            tips: '记录血糖值，复诊时带给医生'
+          },
+          {
+            name: '足部检查',
+            detail: '糖尿病足预防',
+            schedule: '每天睡前检查双脚',
+            tips: '注意有无伤口、红肿、麻木'
+          }
+        ]
+      },
+      hypertension: {
+        title: '高血压用药模板',
+        templates: [
+          {
+            name: '氨氯地平',
+            detail: '钙通道阻滞剂，平稳降压',
+            schedule: '每天早晨1片(5mg)',
+            tips: '可能出现脚踝水肿，不要突然停药'
+          },
+          {
+            name: '缬沙坦',
+            detail: 'ARB类降压药，保护心肾',
+            schedule: '每天早晨1片(80mg)',
+            tips: '定期检查血钾和肾功能'
+          },
+          {
+            name: '美托洛尔',
+            detail: 'β受体阻滞剂，减慢心率',
+            schedule: '每天早晚各1片(25mg)',
+            tips: '不要突然停药，可能出现乏力'
+          },
+          {
+            name: '氢氯噻嗪',
+            detail: '利尿剂，减少血容量',
+            schedule: '每天早晨1片(12.5mg)',
+            tips: '注意补钾，监测电解质'
+          },
+          {
+            name: '血压监测',
+            detail: '定时测量血压',
+            schedule: '每天早晚各测1次',
+            tips: '安静休息5分钟后测量，记录数值'
+          }
+        ]
+      },
+      cholesterol: {
+        title: '高血脂用药模板',
+        templates: [
+          {
+            name: '阿托伐他汀',
+            detail: '他汀类降脂药，降低LDL',
+            schedule: '每晚睡前1片(20mg)',
+            tips: '定期检查肝功能和肌酸激酶'
+          },
+          {
+            name: '瑞舒伐他汀',
+            detail: '强效他汀类降脂药',
+            schedule: '每晚睡前1片(10mg)',
+            tips: '注意肌肉酸痛症状'
+          },
+          {
+            name: '依折麦布',
+            detail: '抑制胆固醇吸收',
+            schedule: '每天1片(10mg)，随时服用',
+            tips: '可与他汀联用，增强降脂效果'
+          },
+          {
+            name: '非诺贝特',
+            detail: '降低甘油三酯',
+            schedule: '每天午餐时1片(200mg)',
+            tips: '定期检查肝功能'
+          },
+          {
+            name: '血脂检查',
+            detail: '定期监测血脂水平',
+            schedule: '每3-6个月检查1次',
+            tips: '空腹12小时后抽血'
+          }
+        ]
+      },
+      thyroid: {
+        title: '甲状腺用药模板',
+        templates: [
+          {
+            name: '左甲状腺素(优甲乐)',
+            detail: '甲状腺激素替代治疗',
+            schedule: '每天早餐前30-60分钟1片',
+            tips: '空腹服用，避免与钙铁同服'
+          },
+          {
+            name: '甲巯咪唑',
+            detail: '抗甲状腺药物，治疗甲亢',
+            schedule: '每天3次，每次1片(5mg)',
+            tips: '定期检查血常规和肝功能'
+          },
+          {
+            name: '甲状腺检查',
+            detail: '定期监测甲状腺功能',
+            schedule: '每3-6个月检查TSH、T3、T4',
+            tips: '调整药物剂量需遵医嘱'
+          }
+        ]
+      },
+      heart: {
+        title: '心脏病用药模板',
+        templates: [
+          {
+            name: '阿司匹林',
+            detail: '抗血小板，预防血栓',
+            schedule: '每天早餐后1片(100mg)',
+            tips: '注意出血倾向，定期检查'
+          },
+          {
+            name: '氯吡格雷',
+            detail: '抗血小板药物',
+            schedule: '每天1片(75mg)',
+            tips: '不要随意停药，注意出血'
+          },
+          {
+            name: '阿托伐他汀',
+            detail: '稳定斑块，降低胆固醇',
+            schedule: '每晚睡前1片(20mg)',
+            tips: '定期检查肝功能'
+          },
+          {
+            name: '硝酸甘油',
+            detail: '心绞痛急救用药',
+            schedule: '胸痛时舌下含服1片',
+            tips: '随身携带，避光保存'
+          },
+          {
+            name: '心电图检查',
+            detail: '定期心脏检查',
+            schedule: '每3-6个月做1次心电图',
+            tips: '出现胸闷胸痛及时就医'
+          }
+        ]
+      }
+    };
+
+    // 显示疾病模板
+    function showDiseaseTemplates(disease) {
+      const templatesDiv = document.getElementById('medTemplates');
+      const diseaseDiv = document.getElementById('diseaseTemplates');
+      const titleSpan = document.getElementById('diseaseTitle');
+      const listDiv = document.getElementById('diseaseTemplateList');
+      
+      if (disease === 'custom') {
+        // 自定义模式，隐藏模板，显示输入框
+        templatesDiv.style.display = 'none';
+        diseaseDiv.style.display = 'none';
+        return;
+      }
+      
+      const data = diseaseTemplates[disease];
+      if (!data) return;
+      
+      templatesDiv.style.display = 'none';
+      diseaseDiv.style.display = 'block';
+      titleSpan.textContent = data.title;
+      
+      listDiv.innerHTML = data.templates.map((t, i) => `
+        <div class="template-item">
+          <div class="template-item-info">
+            <div class="template-item-name">${t.name}</div>
+            <div class="template-item-detail">${t.detail}</div>
+            <div class="template-item-detail" style="color: #ff8fc1;">${t.schedule}</div>
+          </div>
+          <button class="template-item-btn" onclick="applyTemplate('${disease}', ${i})">添加</button>
+        </div>
+      `).join('');
+    }
+
+    // 隐藏疾病模板
+    function hideDiseaseTemplates() {
+      document.getElementById('medTemplates').style.display = 'block';
+      document.getElementById('diseaseTemplates').style.display = 'none';
+    }
+
+    // 应用模板
+    async function applyTemplate(disease, index) {
+      const data = diseaseTemplates[disease];
+      if (!data || !data.templates[index]) return;
+      
+      const template = data.templates[index];
+      
+      // 填充到输入框
+      const input = document.getElementById('medNlInput');
+      input.value = `${template.schedule}，${template.tips}`;
+      
+      // 触发创建
+      await createMedication();
+      
+      // 显示成功消息
+      speakAndShow(`已添加${template.name}用药提醒`, { state: 'happy' });
+    }
+
+    async function refreshMedPanel() {
+      const status = await medApi('/api/medication/status');
+      if (!status) {
+        document.getElementById('medStatusDot').textContent = 'API 离线';
+        document.getElementById('medStatusDot').className = 'pill-status off';
+        document.getElementById('medModelInfo').textContent = '';
+        document.getElementById('medList').innerHTML = '<div class="med-empty">⚠️ 用药提醒后端未启动，请先启动 medication-module</div>';
+        return;
+      }
+
+      const dot = document.getElementById('medStatusDot');
+      dot.textContent = status.enabled ? '✅ 运行中' : '⏸ 已暂停';
+      dot.className = 'pill-status ' + (status.enabled ? 'on' : 'off');
+      document.getElementById('medModelInfo').textContent = '模型: ' + (status.model || '本地规则');
+      document.getElementById('medToggleBtn').textContent = status.enabled ? '⏸ 禁用模块' : '▶ 启用模块';
+
+      const list = await medApi('/api/medication/list');
+      const meds = list ? list.medications : [];
+      const listEl = document.getElementById('medList');
+
+      if (!meds.length) {
+        listEl.innerHTML = '<div class="med-empty">暂无用药提醒。用自然语言创建一条吧！<br/>例如：<b>每天晚上8点吃降压药一片</b></div>';
+      } else {
+        listEl.innerHTML = meds.map(m => `          <div class="med-item ${m.enabled ? '' : 'disabled'}">            <div class="med-top">              <span class="med-name">💊 ${escHtml(m.drug_name)} ${escHtml(m.dosage)}</span>              <span class="med-time">⏰ ${escHtml(m.schedule_time)}</span>            </div>            <div class="med-detail">              <span>📅 ${escHtml(m.schedule_rule || m.schedule_type)}</span>              ${m.note ? `<span>📝 ${escHtml(m.note)}</span>` : ''}              <span>🔊 ${escHtml(m.voice_lang || 'zh-CN')}</span>            </div>            <div class="med-actions">              <button class="confirm-btn" onclick="confirmMed('${m.id}', 'taken')">✅ 已吃</button>              <button onclick="confirmMed('${m.id}', 'snooze')">⏰ 稍后</button>              <button onclick="toggleMedItem('${m.id}', ${m.enabled ? 0 : 1})">${m.enabled ? '⏸' : '▶'}</button>              <button onclick="deleteMed('${m.id}')">🗑</button>            </div>          </div>        `).join('');
+      }
+
+      const escalated = await medApi('/api/medication/escalated');
+      const escEl = document.getElementById('medEscalated');
+      if (escalated && escalated.escalated.length) {
+        escEl.innerHTML = `⚠️ <b>超时未确认</b>：${escalated.escalated.map(e => `${e.drug_name} ${e.dosage}`).join('、')} — 已触发手机推送通知`;
+        escEl.classList.add('show');
+      } else {
+        escEl.classList.remove('show');
+      }
+    }
+
+    async function createMedication() {
+      const input = document.getElementById('medNlInput');
+      const text = input.value.trim();
+      if (!text) return;
+      input.disabled = true;
+      const result = await medApi('/api/medication/create', {
+        method: 'POST',
+        body: JSON.stringify({ raw_text: text })
+      });
+      if (result && result.ok) {
+        const m = result.medication;
+        speakAndShow(`好的，已设定 ${m.drug_name} ${m.dosage}，每天 ${m.schedule_time} 提醒你。`, { state: 'happy' });
+        input.value = '';
+        await refreshMedPanel();
+      } else {
+        speakAndShow('抱歉，用药提醒后端未连接，请先启动服务。', { state: 'alert' });
+      }
+      input.disabled = false;
+    }
+
+    async function confirmMed(id, action) {
+      await medApi(`/api/medication/${id}/confirm`, {
+        method: 'POST',
+        body: JSON.stringify({ action })
+      });
+      const actions = { taken: '已记录服药', snooze: '已推迟提醒', skip: '已跳过' };
+      speakAndShow(actions[action] || '已确认', { state: 'happy' });
+      await refreshMedPanel();
+    }
+
+    async function toggleMedItem(id, enabled) {
+      await medApi(`/api/medication/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ enabled })
+      });
+      await refreshMedPanel();
+    }
+
+    async function deleteMed(id) {
+      await medApi(`/api/medication/${id}`, { method: 'DELETE' });
+      await refreshMedPanel();
+    }
+
+    async function toggleMedModule() {
+      const status = await medApi('/api/medication/status');
+      if (!status) return;
+      await medApi('/api/medication/toggle', {
+        method: 'POST',
+        body: JSON.stringify({ enabled: !status.enabled })
+      });
+      await refreshMedPanel();
+    }
+
+    function updateVoiceLang() {
+      const lang = medVoiceSelect.value;
+      localStorage.setItem('medication_voice_lang', lang);
+    }
+
+    function updateVoiceRegion() {
+      const region = document.getElementById('voiceRegionSelect').value;
+      localStorage.setItem('voice_region', region);
+      
+      // 重置音色选择为自动
+      voiceSettings.voiceName = 'auto';
+      saveSettings();
+      
+      // 重新加载语音列表（会根据新区域筛选）
+      loadVoices();
+      
+      // 用新选择的语言播报确认
+      const regionMessages = {
+        'auto': '已切换为自动选择模式。',
+        'zh-CN': '已切换为中文语音。',
+        'zh-TW': '已切換為中文繁體語音。',
+        'en-US': 'Switched to English voice.',
+        'en-GB': 'Switched to British English voice.',
+        'ja-JP': '日本語の音声に切り替えました。',
+        'ko-KR': '한국어 음성으로 전환되었습니다.',
+        'fr-FR': 'Passage en voix française.',
+        'de-DE': 'Auf deutsche Stimme umgeschaltet.',
+        'es-ES': 'Cambiado a voz en español.',
+        'it-IT': 'Passaggio alla voce italiana.',
+        'ru-RU': 'Переключено на русский голос.',
+        'pt-BR': 'Alterado para voz em português.',
+        'ar-SA': 'تم التبديل إلى الصوت العربي.',
+        'th-TH': 'เปลี่ยนเป็นเสียงภาษาไทยแล้ว',
+        'vi-VN': 'Đã chuyển sang giọng Việt Nam.'
+      };
+      
+      const message = regionMessages[region] || `已切换为 ${region} 语音。`;
+      speakAndShow(message, { state: 'happy' });
+      
+      // 更新 UI 语言
+      updateUILanguage();
+    }
+
+
+    function toggleMedPanel() {
+      const isOpen = medPanel.classList.toggle('active');
+      if (isOpen) {
+        refreshMedPanel();
+        translateMedPanel();
+      }
+    }
+
+    function closeMedPanel() {
+      medPanel.classList.remove('active');
+    }
+
+    function closeMobilePanel() {
+      const mobilePanel = document.getElementById('mobilePanel');
+      if (mobilePanel) mobilePanel.classList.remove('show');
+    }
+
+    function closeSettings() {
+      const panel = document.getElementById('panel');
+      const settingsPanel = document.getElementById('settingsPanel');
+      if (panel && settingsPanel) {
+        panel.classList.remove('show');
+        settingsPanel.classList.remove('show');
+      }
+    }
+
+    function closeRemindPanel() {
+      const remindPanel = document.getElementById('remindPanel');
+      if (remindPanel) remindPanel.classList.remove('active');
+    }
+
+    function toggleRemindPanel() {
+      const remindPanel = document.getElementById('remindPanel');
+      if (remindPanel) {
+        const isOpen = remindPanel.classList.toggle('active');
+        if (isOpen) refreshRemindList();
+      }
+    }
+
+    let reminders = JSON.parse(localStorage.getItem('extra_reminders') || '[]');
+
+    function createReminder() {
+      const input = document.getElementById('remindNlInput');
+      const text = input.value.trim();
+      if (!text) return;
+      
+      const reminder = {
+        id: Date.now(),
+        text: text,
+        time: new Date().toLocaleString('zh-CN'),
+        done: false
+      };
+      reminders.push(reminder);
+      localStorage.setItem('extra_reminders', JSON.stringify(reminders));
+      input.value = '';
+      speakAndShow(`已记下提醒：${text}`, { state: 'happy' });
+      refreshRemindList();
+    }
+
+    function completeReminder(id) {
+      const idx = reminders.findIndex(r => r.id === id);
+      if (idx !== -1) {
+        reminders[idx].done = true;
+        localStorage.setItem('extra_reminders', JSON.stringify(reminders));
+        speakAndShow('好的，已标记完成', { state: 'happy' });
+        refreshRemindList();
+      }
+    }
+
+    function deleteReminder(id) {
+      reminders = reminders.filter(r => r.id !== id);
+      localStorage.setItem('extra_reminders', JSON.stringify(reminders));
+      refreshRemindList();
+    }
+
+    function refreshRemindList() {
+      const listEl = document.getElementById('remindList');
+      if (!reminders.length) {
+        listEl.innerHTML = '<div class="remind-empty">暂无额外提醒。<br/>用自然语言添加吧！</div>';
+      } else {
+        listEl.innerHTML = reminders.map(r => `\
+          <div class="remind-item ${r.done ? 'done' : ''}">\
+            <div class="remind-title">${escHtml(r.text)}</div>\
+            <div class="remind-time">📅 ${escHtml(r.time)}</div>\
+            <div class="remind-actions">\
+              ${r.done ? '<span style="color: #1c7850; font-size: 12px;">✅ 已完成</span>' : `<button onclick="completeReminder(${r.id})">✅ 完成</button>`}\
+              <button onclick="deleteReminder(${r.id})">🗑 删除</button>\
+            </div>\
+          </div>\
+        `).join('');
+      }
+    }
+
+    let aiChatHistory = [];
+    const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
+
+    function toggleAiChat() {
+      const panel = document.getElementById('aiChatPanel');
+      if (panel) {
+        const isOpen = panel.classList.toggle('active');
+        if (isOpen) {
+          setTimeout(() => {
+            const input = document.getElementById('aiChatInput');
+            if (input) input.focus();
+          }, 100);
+        }
+      }
+    }
+
+    function closeAiChat() {
+      const panel = document.getElementById('aiChatPanel');
+      if (panel) panel.classList.remove('active');
+    }
+
+    function setDeepSeekKey() {
+      // 显示自定义输入弹窗
+      const modal = document.getElementById('apiKeyModal');
+      if (modal) {
+        modal.classList.add('active');
+        const input = document.getElementById('apiKeyInput');
+        const savedKey = localStorage.getItem('deepseek_api_key') || '';
+        input.value = savedKey;
+        setTimeout(() => input.focus(), 100);
+      }
+    }
+
+    function saveApiKey() {
+      const input = document.getElementById('apiKeyInput');
+      const key = input.value.trim();
+      if (key) {
+        localStorage.setItem('deepseek_api_key', key);
+        speakAndShow('API Key 已保存，现在可以使用 AI 助手啦！', { state: 'happy' });
+      }
+      closeApiKeyModal();
+    }
+
+    function closeApiKeyModal() {
+      const modal = document.getElementById('apiKeyModal');
+      if (modal) modal.classList.remove('active');
+    }
+
+    async function sendAiMessage() {
+      const input = document.getElementById('aiChatInput');
+      const text = input.value.trim();
+      if (!text) return;
+
+      const apiKey = localStorage.getItem('deepseek_api_key') || '';
+      if (!apiKey) {
+        addChatMessage('ai', '⚠️ 请先设置 DeepSeek API Key。点击下方按钮设置。');
+        addChatMessage('system', '<button onclick="setDeepSeekKey()" style="background: linear-gradient(135deg, #ff8fc1, #9b7bea); color: white; border: none; border-radius: 12px; padding: 8px 16px; cursor: pointer;">设置 API Key</button>');
+        return;
+      }
+
+      input.disabled = true;
+      addChatMessage('user', text);
+      input.value = '';
+
+      // 构建消息历史
+      const messages = [
+        { role: 'system', content: `你是 AuraDesk 桌面助手的 AI 助手，名叫小灵。你是一个温暖、友好、有耐心的助手。
+
+你可以帮用户管理以下功能：
+1. 提醒管理 - 创建、查看、完成提醒
+2. 用药提醒 - 管理药物提醒
+3. 语音设置 - 调整语音区域、音色
+4. 界面设置 - 调整大小、主题
+
+当用户想要执行操作时，回复格式为：
+[功能:参数1,参数2] 普通回复内容
+
+例如：
+- 用户说"帮我创建一个明天下午3点开会的提醒" → [创建提醒:明天下午3点开会,会议] 好的，已帮你创建开会提醒！
+- 用户说"查看我的提醒" → [查看提醒] 让我看看你的提醒列表...
+- 用户说"切换到英语" → [切换语音:en-US] 已切换到英语语音！
+
+可用的功能标签：
+- [创建提醒:标题,类型] - 创建新提醒
+- [查看提醒] - 显示提醒列表
+- [完成提醒:ID] - 标记提醒完成
+- [查看用药] - 显示用药提醒
+- [切换语音:区域代码] - 切换语音区域
+- [调整大小:数值] - 调整助手大小
+
+请用简短的中文回答，保持温暖友好的语气。` },
+        ...aiChatHistory.slice(-10).map(msg => ({
+          role: msg.role === 'ai' ? 'assistant' : 'user',
+          content: msg.text
+        })),
+        { role: 'user', content: text }
+      ];
+
+      try {
+        const response = await fetch(DEEPSEEK_API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`
+          },
+          body: JSON.stringify({
+            model: 'deepseek-chat',
+            messages: messages,
+            max_tokens: 500,
+            temperature: 0.7
+          })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const aiReply = data.choices?.[0]?.message?.content || '抱歉，我无法理解你的问题。';
+          // 解析并执行功能调用
+          const cleanReply = parseAndExecuteAiCommands(aiReply);
+          addChatMessage('ai', cleanReply);
+        } else if (response.status === 401) {
+          addChatMessage('ai', '⚠️ API Key 无效，请重新设置。');
+          localStorage.removeItem('deepseek_api_key');
+        } else {
+          addChatMessage('ai', '⚠️ 请求失败，请稍后再试。');
+        }
+      } catch (e) {
+        addChatMessage('ai', '⚠️ 网络错误：' + e.message);
+      }
+
+      input.disabled = false;
+      input.focus();
+    }
+
+    // 解析并执行 AI 命令
+    function parseAndExecuteAiCommands(reply) {
+      // 匹配 [功能:参数1,参数2] 格式
+      const commandRegex = /\[([^\]]+)\]/g;
+      let match;
+      let cleanReply = reply;
+      
+      while ((match = commandRegex.exec(reply)) !== null) {
+        const fullCommand = match[1];
+        const parts = fullCommand.split(':');
+        const action = parts[0];
+        const params = parts[1] ? parts[1].split(',') : [];
+        
+        executeAiCommand(action, params);
+        
+        // 从回复中移除命令标签
+        cleanReply = cleanReply.replace(match[0], '').trim();
+      }
+      
+      return cleanReply || '好的，已执行操作！';
+    }
+
+    function executeAiCommand(action, params) {
+      switch (action) {
+        case '创建提醒':
+          if (params[0]) {
+            createReminderFromAi(params[0], params[1] || '其他');
+          }
+          break;
+          
+        case '查看提醒':
+          toggleRemindPanel();
+          break;
+          
+        case '完成提醒':
+          if (params[0]) {
+            completeReminder(Number(params[0]));
+          }
+          break;
+          
+        case '查看用药':
+          toggleMedPanel();
+          break;
+          
+        case '切换语音':
+          if (params[0]) {
+            document.getElementById('voiceRegionSelect').value = params[0];
+            updateVoiceRegion();
+          }
+          break;
+          
+        case '调整大小':
+          if (params[0]) {
+            voiceSettings.avatarScale = Number(params[0]);
+            applyAvatarSize();
+          }
+          break;
+          
+        default:
+          console.log('未知的 AI 命令:', action);
+      }
+    }
+
+    function createReminderFromAi(title, type) {
+      const reminder = {
+        id: Date.now(),
+        text: title,
+        type: type,
+        time: new Date().toLocaleString('zh-CN'),
+        done: false
+      };
+      let reminders = JSON.parse(localStorage.getItem('extra_reminders') || '[]');
+      reminders.push(reminder);
+      localStorage.setItem('extra_reminders', JSON.stringify(reminders));
+      refreshRemindList();
+      speakAndShow(`已创建提醒：${title}`, { state: 'happy' });
+    }
+
+    function addChatMessage(role, text) {
+      const messagesEl = document.getElementById('chatMessages');
+      const msgEl = document.createElement('div');
+      msgEl.className = 'chat-message ' + role;
+      if (role === 'system') {
+        msgEl.innerHTML = text;
+      } else {
+        msgEl.textContent = text;
+      }
+      messagesEl.appendChild(msgEl);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+      aiChatHistory.push({ role, text });
+    }
+
+    function escHtml(s) {
+      return String(s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+    }
+
+    (function() {
+      const saved = localStorage.getItem('medication_voice_lang');
+      if (saved) medVoiceSelect.value = saved;
+      const savedRegion = localStorage.getItem('voice_region');
+      if (savedRegion) document.getElementById('voiceRegionSelect').value = savedRegion;
+      refreshMedPanel();
+      refreshRemindList();
+      setInterval(refreshMedPanel, 30000);
+      setInterval(refreshRemindList, 60000);
+    })();
+
+    // ─── 家庭健康圈 ───
+    const FAMILY_CLOUD_URL = 'http://127.0.0.1:8787';
+    const FAMILY_CLOUD_TOKEN = '***';
+    const DEVICE_ID = 'desktop-' + Math.random().toString(36).slice(2, 8);
+    let currentFamilyId = localStorage.getItem('familyId') || '';
+    let currentFamily = null;
+    let selectedCardType = 'warm';
+
+    function familyApi(method, path, body) {
+      const opts = {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + FAMILY_CLOUD_TOKEN,
+          'x-auradesk-device-id': DEVICE_ID
+        }
+      };
+      if (body) opts.body = JSON.stringify(body);
+      return fetch(FAMILY_CLOUD_URL + path, opts).then(r => r.json()).catch(() => ({ ok: false }));
+    }
+
+    function toggleFamilyPanel() {
+      const p = document.getElementById('familyPanel');
+      p.classList.toggle('active');
+      if (p.classList.contains('active')) {
+        closeMedPanel();
+        closeAiChat();
+        closeRemindPanel();
+        refreshFamilyPanel();
+      }
+    }
+    function closeFamilyPanel() {
+      document.getElementById('familyPanel').classList.remove('active');
+    }
+
+    function switchFamilyTab(tab) {
+      ['family', 'checkin', 'encourage'].forEach(t => {
+        document.getElementById('familyTab' + t.charAt(0).toUpperCase() + t.slice(1)).style.display = t === tab ? 'block' : 'none';
+        document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1)).classList.toggle('active', t === tab);
+      });
+      if (tab === 'checkin') refreshCheckinTab();
+      if (tab === 'encourage') refreshEncourageTab();
+    }
+
+    async function refreshFamilyPanel() {
+      if (!currentFamilyId) {
+        // 首次自动加入演示家庭组
+        const demoJoin = await familyApi('POST', '/api/family', {
+          familyId: 'demo-fam', deviceId: DEVICE_ID, memberName: '我'
+        });
+        if (demoJoin.ok && demoJoin.family) {
+          currentFamilyId = 'demo-fam';
+          localStorage.setItem('familyId', currentFamilyId);
+          currentFamily = demoJoin.family;
+          showFamilyDashboard();
+          return;
+        }
+        document.getElementById('familySetup').style.display = 'block';
+        document.getElementById('familyDashboard').style.display = 'none';
+        return;
+      }
+      const res = await familyApi('GET', '/api/family');
+      if (res.ok && res.families && res.families[currentFamilyId]) {
+        currentFamily = res.families[currentFamilyId];
+        showFamilyDashboard();
+      } else {
+        currentFamilyId = '';
+        localStorage.removeItem('familyId');
+        document.getElementById('familySetup').style.display = 'block';
+        document.getElementById('familyDashboard').style.display = 'none';
+      }
+    }
+
+    function showFamilyDashboard() {
+      document.getElementById('familySetup').style.display = 'none';
+      document.getElementById('familyDashboard').style.display = 'block';
+      document.getElementById('familyDisplayName').textContent = currentFamily.name;
+      document.getElementById('familyIdLabel').textContent = 'ID: ' + currentFamilyId;
+      // 成员列表
+      const list = document.getElementById('familyMemberList');
+      list.innerHTML = currentFamily.members.map(m => `
+        <div class="member-row">
+          <span class="member-status ${m.authorized ? 'done' : 'unknown'}"></span>
+          <span style="flex:1">${escHtml(m.name)}</span>
+          <label style="font-size:11px;color:#9a7f91;cursor:pointer;">
+            <input type="checkbox" ${m.authorized ? 'checked' : ''} onchange="toggleMemberAuth('${m.deviceId}', this.checked)" style="margin-right:3px;" />授权
+          </label>
+        </div>
+      `).join('');
+      // 今日用药状态
+      refreshFamilyHealthStatus();
+    }
+
+    async function refreshFamilyHealthStatus() {
+      if (!currentFamilyId) return;
+      const res = await familyApi('GET', '/api/checkin/leaderboard?familyId=' + currentFamilyId);
+      if (!res.ok) return;
+      const status = document.getElementById('familyHealthStatus');
+      if (!res.leaderboard || res.leaderboard.length === 0) {
+        status.textContent = '暂无成员数据';
+        return;
+      }
+      status.innerHTML = res.leaderboard.map(m => `
+        <div style="display:flex;align-items:center;gap:6px;margin:3px 0;">
+          <span class="member-status ${m.authorized ? (m.todayDone ? 'done' : 'missed') : 'unknown'}"></span>
+          <span>${escHtml(m.name)}</span>
+          <span style="color:#9a7f91;font-size:11px;margin-left:auto;">${m.authorized ? (m.todayDone ? '已完成' : '未完成') : '未授权'}</span>
+        </div>
+      `).join('');
+      // 广播文字
+      const doneCount = res.todayCount || 0;
+      const total = res.totalMembers || 0;
+      const msg = `你的病友群里已经有 ${doneCount} 个人完成了今天的用药，加油！`;
+      document.getElementById('familyBroadcastText').textContent = msg;
+      // 小精灵播报（首次打开时）
+      if (window.AuraDeskAvatar && window.AuraDeskAvatar.speakAndShow) {
+        // 不主动播报，只在打卡时播报
+      }
+    }
+
+    async function createFamily() {
+      const name = document.getElementById('familyNameInput').value.trim() || '我的家庭';
+      const res = await familyApi('POST', '/api/family', {
+        name, deviceId: DEVICE_ID, memberName: '我'
+      });
+      if (res.ok && res.family) {
+        currentFamilyId = res.family.id;
+        localStorage.setItem('familyId', currentFamilyId);
+        currentFamily = res.family;
+        showFamilyDashboard();
+      }
+    }
+
+    async function joinFamily() {
+      const fid = document.getElementById('familyJoinInput').value.trim();
+      if (!fid) return;
+      const res = await familyApi('POST', '/api/family', {
+        familyId: fid, deviceId: DEVICE_ID, memberName: '我'
+      });
+      if (res.ok && res.family) {
+        currentFamilyId = fid;
+        localStorage.setItem('familyId', currentFamilyId);
+        currentFamily = res.family;
+        showFamilyDashboard();
+      }
+    }
+
+    function copyFamilyId() {
+      if (currentFamilyId) {
+        navigator.clipboard.writeText(currentFamilyId).catch(() => {});
+        speakAndShow('家庭组 ID 已复制', { state: 'happy' });
+      }
+    }
+
+    async function toggleMemberAuth(deviceId, authorized) {
+      if (!currentFamilyId) return;
+      await familyApi('POST', '/api/family/' + currentFamilyId + '/authorize', {
+        deviceId, authorized
+      });
+      refreshFamilyPanel();
+    }
+
+    // ─── 打卡挑战 ───
+    async function refreshCheckinTab() {
+      const res = await familyApi('GET', '/api/checkin/leaderboard?familyId=' + (currentFamilyId || ''));
+      if (res.ok && res.leaderboard) {
+        renderLeaderboard(res.leaderboard);
+        // 更新自己的连续天数
+        const me = res.leaderboard.find(m => m.deviceId === DEVICE_ID);
+        if (me) {
+          document.getElementById('checkinStreakNum').textContent = me.streak;
+          updateStreakEmoji(me.streak);
+          if (me.todayDone) {
+            document.getElementById('checkinBtn').textContent = '今日已打卡';
+            document.getElementById('checkinBtn').style.opacity = '0.6';
+            document.getElementById('checkinTodayStatus').textContent = '明天继续加油！';
+          } else {
+            document.getElementById('checkinBtn').textContent = '今日打卡';
+            document.getElementById('checkinBtn').style.opacity = '1';
+            document.getElementById('checkinTodayStatus').textContent = '';
+          }
+        }
+        renderBadges(me ? me.streak : 0);
+      }
+    }
+
+    function updateStreakEmoji(streak) {
+      const el = document.getElementById('checkinStreakEmoji');
+      if (streak >= 30) el.textContent = '🏆';
+      else if (streak >= 14) el.textContent = '⭐';
+      else if (streak >= 7) el.textContent = '🌟';
+      else el.textContent = '🔥';
+    }
+
+    function renderLeaderboard(list) {
+      const el = document.getElementById('checkinLeaderboard');
+      if (!list || list.length === 0) {
+        el.innerHTML = '<div style="text-align:center;color:#9a7f91;font-size:12px;padding:12px;">加入家庭组后可查看排行榜</div>';
+        return;
+      }
+      el.innerHTML = list.map((m, i) => `
+        <div class="leaderboard-row">
+          <span class="leaderboard-rank">${i + 1}</span>
+          <span style="flex:1;">${escHtml(m.name)}</span>
+          <span style="font-size:11px;color:#9a7f91;">${m.todayDone ? '✅' : '⬜'}</span>
+          <span style="font-size:11px;color:#ff72ab;font-weight:bold;">${m.streak}天</span>
+        </div>
+      `).join('');
+    }
+
+    function renderBadges(streak) {
+      const wall = document.getElementById('badgeWall');
+      const badges = [
+        { days: 1, icon: '🌱', name: '初芽' },
+        { days: 3, icon: '🌿', name: '新绿' },
+        { days: 7, icon: '🌸', name: '花开' },
+        { days: 14, icon: '⭐', name: '星光' },
+        { days: 21, icon: '🌙', name: '月华' },
+        { days: 30, icon: '🏆', name: '坚持' }
+      ];
+      wall.innerHTML = badges.map(b => `
+        <div class="badge-item ${streak >= b.days ? '' : 'locked'}" title="${b.name}（${b.days}天）">
+          ${b.icon}
+        </div>
+      `).join('');
+    }
+
+    async function doCheckin() {
+      const res = await familyApi('POST', '/api/checkin', {
+        deviceId: DEVICE_ID,
+        familyId: currentFamilyId,
+        medications: ['已完成今日用药']
+      });
+      if (res.ok) {
+        const streak = res.checkin ? res.checkin.streak : 0;
+        document.getElementById('checkinStreakNum').textContent = streak;
+        updateStreakEmoji(streak);
+        document.getElementById('checkinBtn').textContent = '今日已打卡';
+        document.getElementById('checkinBtn').style.opacity = '0.6';
+        document.getElementById('checkinTodayStatus').textContent = '明天继续加油！';
+        renderBadges(streak);
+        // 小精灵播报
+        if (window.AuraDeskAvatar && window.AuraDeskAvatar.speakAndShow) {
+          let msg = `打卡成功！已连续 ${streak} 天`;
+          if (streak === 7) msg += '，获得「花开」徽章！';
+          else if (streak === 14) msg += '，获得「星光」徽章！';
+          else if (streak === 30) msg += '，获得「坚持」徽章！太厉害了！';
+          speakAndShow(msg, { state: 'happy' });
+        }
+        refreshCheckinTab();
+        // 刷新排行榜
+        if (currentFamilyId) {
+          const lb = await familyApi('GET', '/api/checkin/leaderboard?familyId=' + currentFamilyId);
+          if (lb.ok) renderLeaderboard(lb.leaderboard);
+        }
+      }
+    }
+
+    // ─── 匿名鼓励 ───
+    function selectCardType(type) {
+      selectedCardType = type;
+      document.querySelectorAll('.card-type-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.type === type);
+      });
+    }
+
+    async function sendEncourage() {
+      const msg = document.getElementById('encourageMsg').value.trim() || '加油，你很棒！';
+      // 随机发给家庭组中的一位成员
+      let toDeviceId = '';
+      if (currentFamily && currentFamily.members.length > 1) {
+        const others = currentFamily.members.filter(m => m.deviceId !== DEVICE_ID);
+        if (others.length > 0) {
+          toDeviceId = others[Math.floor(Math.random() * others.length)].deviceId;
+        }
+      }
+      if (!toDeviceId) {
+        speakAndShow('还没有其他成员加入，邀请家人一起来吧！', { state: 'alert' });
+        return;
+      }
+      const res = await familyApi('POST', '/api/encourage', {
+        fromDeviceId: DEVICE_ID,
+        toDeviceId,
+        familyId: currentFamilyId,
+        cardType: selectedCardType,
+        message: msg
+      });
+      if (res.ok) {
+        document.getElementById('encourageMsg').value = '';
+        speakAndShow('鼓励卡片已送出，温暖传递中！', { state: 'happy' });
+      }
+    }
+
+    async function refreshEncourageTab() {
+      const res = await familyApi('GET', '/api/encourage?deviceId=' + DEVICE_ID);
+      const el = document.getElementById('encourageReceived');
+      if (!res.ok || !res.cards || res.cards.length === 0) {
+        el.innerHTML = '<div style="text-align:center;color:#9a7f91;font-size:12px;padding:16px;">暂无收到的鼓励卡片</div>';
+        return;
+      }
+      const icons = { warm: '🤗', fight: '💪', flower: '🌸', star: '⭐' };
+      el.innerHTML = res.cards.slice().reverse().map(c => `
+        <div class="encourage-card">
+          <div class="encourage-card-icon">${icons[c.cardType] || '💌'}</div>
+          <div>${escHtml(c.message)}</div>
+          <div style="font-size:10px;color:#b08ca0;margin-top:4px;">来自一位匿名病友</div>
+        </div>
+      `).join('');
+    }
+
+    // 定时刷新家庭状态
+    setInterval(() => {
+      if (document.getElementById('familyPanel').classList.contains('active') && currentFamilyId) {
+        refreshFamilyHealthStatus();
+      }
+    }, 60000);
+
+    // ─── 交友广场 ───
+    const SOCIAL_DEVICE_ID = localStorage.getItem('socialDeviceId') || (() => { const id = DEVICE_ID || 'desktop-' + Math.random().toString(36).slice(2, 8); localStorage.setItem('socialDeviceId', id); return id; })();
+    let socialProfile = JSON.parse(localStorage.getItem('socialProfile') || 'null');
+    let socialNearbyMessages = [];
+    let socialBumpTimer = null;
+    let socialBumpActive = false;
+    let socialFriends = [];
+    let socialChatTarget = null;
+    let feedPosts = [];
+
+    function socialApi(method, path, body) {
+      const opts = {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + FAMILY_CLOUD_TOKEN,
+          'x-auradesk-device-id': SOCIAL_DEVICE_ID
+        }
+      };
+      if (body) opts.body = JSON.stringify(body);
+      return fetch(FAMILY_CLOUD_URL + path, opts).then(r => r.json()).catch(() => ({ ok: false }));
+    }
+
+    function toggleSocialPanel() {
+      const p = document.getElementById('socialPanel');
+      p.classList.toggle('active');
+      if (p.classList.contains('active')) {
+        closeMedPanel(); closeAiChat(); closeRemindPanel(); closeFamilyPanel();
+        initSocialPanel();
+      }
+    }
+    function closeSocialPanel() {
+      document.getElementById('socialPanel').classList.remove('active');
+      if (socialBumpTimer) { clearInterval(socialBumpTimer); socialBumpTimer = null; }
+    }
+
+    function initSocialPanel() {
+      // 首次打开自动注入演示数据
+      if (!localStorage.getItem('socialDeviceId')) {
+        localStorage.setItem('socialDeviceId', 'demo-user');
+        socialProfile = socialProfile || { nickname: '暖心小助手', avatar: '🦋', bio: '每天都要开心呀', deviceId: 'demo-user' };
+        localStorage.setItem('socialProfile', JSON.stringify(socialProfile));
+        // 同步到云端
+        socialApi('POST', '/api/social/profile', socialProfile);
+      }
+      if (!socialProfile) {
+        document.getElementById('socialProfileSetup').style.display = 'block';
+        document.getElementById('socialProfileBar').style.display = 'none';
+      } else {
+        document.getElementById('socialProfileSetup').style.display = 'none';
+        document.getElementById('socialProfileBar').style.display = 'flex';
+        document.getElementById('socialProfileDisplay').textContent =
+          socialProfile.avatar + ' ' + escHtml(socialProfile.nickname) + (socialProfile.bio ? ' · ' + escHtml(socialProfile.bio) : '');
+      }
+      refreshNearbyMessages();
+    }
+
+    function editSocialProfile() {
+      document.getElementById('socialProfileSetup').style.display = 'block';
+      document.getElementById('socialProfileBar').style.display = 'none';
+      if (socialProfile) {
+        document.getElementById('socialNickname').value = socialProfile.nickname || '';
+        document.getElementById('socialAvatar').value = socialProfile.avatar || '🐻';
+        document.getElementById('socialBio').value = socialProfile.bio || '';
+      }
+    }
+
+    async function saveSocialProfile() {
+      const nickname = document.getElementById('socialNickname').value.trim();
+      if (!nickname) { speakAndShow('请先设置昵称', { state: 'alert' }); return; }
+      const avatarEmoji = document.getElementById('socialAvatar').value;
+      const bio = document.getElementById('socialBio').value.trim();
+      socialProfile = { nickname, avatar: avatarEmoji, bio, deviceId: SOCIAL_DEVICE_ID };
+      localStorage.setItem('socialProfile', JSON.stringify(socialProfile));
+      await socialApi('POST', '/api/social/profile', socialProfile);
+      initSocialPanel();
+      speakAndShow('昵称设置成功，' + nickname + '！', { state: 'happy' });
+    }
+
+    function switchSocialTab(tab) {
+      ['nearby', 'bump', 'feed', 'friends'].forEach(t => {
+        document.getElementById('socialContent' + t.charAt(0).toUpperCase() + t.slice(1)).style.display = t === tab ? 'block' : 'none';
+        document.getElementById('socialTab' + t.charAt(0).toUpperCase() + t.slice(1)).classList.toggle('active', t === tab);
+      });
+      if (tab === 'nearby') refreshNearbyMessages();
+      if (tab === 'feed') refreshFeed();
+      if (tab === 'friends') refreshFriends();
+      if (tab === 'bump') { /* 保持状态 */ }
+    }
+
+    // ─── 广场匿名消息 ───
+    async function sendNearbyMsg() {
+      if (!socialProfile) { speakAndShow('请先设置昵称', { state: 'alert' }); return; }
+      const msg = document.getElementById('nearbyMsgInput').value.trim();
+      if (!msg) return;
+      document.getElementById('nearbyMsgInput').value = '';
+      await socialApi('POST', '/api/social/nearby', {
+        deviceId: SOCIAL_DEVICE_ID,
+        nickname: socialProfile.nickname,
+        avatar: socialProfile.avatar,
+        message: msg
+      });
+      refreshNearbyMessages();
+    }
+
+    async function refreshNearbyMessages() {
+      const res = await socialApi('GET', '/api/social/nearby');
+      if (!res.ok || !res.messages) return;
+      socialNearbyMessages = res.messages;
+      const el = document.getElementById('nearbyMsgList');
+      if (socialNearbyMessages.length === 0) {
+        el.innerHTML = '<div style="text-align:center;color:#9a7f91;font-size:12px;padding:20px;">还没有人发言，来说第一句话吧！</div>';
+        return;
+      }
+      el.innerHTML = socialNearbyMessages.map(m => `
+        <div class="nearby-msg">
+          <div class="nearby-msg-header">
+            <span>${escHtml(m.avatar)} ${escHtml(m.nickname)}</span>
+            <span>${formatTime(m.createdAt)}</span>
+          </div>
+          <div>${escHtml(m.message)}</div>
+        </div>
+      `).join('');
+    }
+
+    function formatTime(iso) {
+      if (!iso) return '';
+      const d = new Date(iso);
+      const now = new Date();
+      const diff = (now - d) / 1000;
+      if (diff < 60) return '刚刚';
+      if (diff < 3600) return Math.floor(diff / 60) + '分钟前';
+      if (diff < 86400) return Math.floor(diff / 3600) + '小时前';
+      return d.getMonth() + 1 + '/' + d.getDate() + ' ' + d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0');
+    }
+
+    // ─── 碰一碰 ───
+    async function doBump() {
+      if (!socialProfile) { speakAndShow('请先设置昵称', { state: 'alert' }); return; }
+      if (socialBumpActive) {
+        // 取消碰一碰
+        socialBumpActive = false;
+        clearInterval(socialBumpTimer);
+        socialBumpTimer = null;
+        document.getElementById('bumpBtn').textContent = '碰一碰';
+        document.getElementById('bumpBtn').style.opacity = '1';
+        document.getElementById('bumpWaiting').style.display = 'none';
+        document.getElementById('bumpStatus').textContent = '已退出碰一碰模式';
+        await socialApi('POST', '/api/social/bump/leave', { deviceId: SOCIAL_DEVICE_ID });
+        return;
+      }
+      // 开始碰一碰
+      socialBumpActive = true;
+      document.getElementById('bumpBtn').textContent = '取消碰一碰';
+      document.getElementById('bumpBtn').style.opacity = '0.7';
+      document.getElementById('bumpWaiting').style.display = 'block';
+      document.getElementById('bumpStatus').textContent = '';
+      document.getElementById('bumpMatches').innerHTML = '';
+      await socialApi('POST', '/api/social/bump/join', {
+        deviceId: SOCIAL_DEVICE_ID,
+        nickname: socialProfile.nickname,
+        avatar: socialProfile.avatar
+      });
+      // 轮询匹配结果
+      socialBumpTimer = setInterval(async () => {
+        if (!socialBumpActive) return;
+        const res = await socialApi('GET', '/api/social/bump/status?deviceId=' + SOCIAL_DEVICE_ID);
+        if (res.ok && res.matched && res.partners && res.partners.length > 0) {
+          socialBumpActive = false;
+          clearInterval(socialBumpTimer);
+          socialBumpTimer = null;
+          document.getElementById('bumpBtn').textContent = '碰一碰';
+          document.getElementById('bumpBtn').style.opacity = '1';
+          document.getElementById('bumpWaiting').style.display = 'none';
+          document.getElementById('bumpEmoji').textContent = '🎉';
+          document.getElementById('bumpStatus').textContent = '碰一碰成功！';
+          // 显示匹配到的人
+          const matches = document.getElementById('bumpMatches');
+          matches.innerHTML = res.partners.map(p => `
+            <div class="bump-match">
+              <span>${escHtml(p.avatar)} ${escHtml(p.nickname)}</span>
+              <button onclick="addFriendFromBump('${escHtml(p.deviceId)}','${escHtml(p.nickname)}','${escHtml(p.avatar)}')">加好友</button>
+            </div>
+          `).join('');
+          speakAndShow('碰一碰成功！发现了 ' + res.partners.length + ' 位附近的人', { state: 'happy' });
+        }
+      }, 2000);
+    }
+
+    async function addFriendFromBump(deviceId, nickname, avatar) {
+      const res = await socialApi('POST', '/api/social/friends/add', {
+        deviceId: SOCIAL_DEVICE_ID,
+        friendId: deviceId,
+        friendName: nickname,
+        friendAvatar: avatar
+      });
+      if (res.ok) {
+        speakAndShow('已添加好友：' + nickname, { state: 'happy' });
+        refreshFriends();
+      }
+    }
+
+    // ─── 晾晒圈 ───
+    async function publishFeedPost() {
+      if (!socialProfile) { speakAndShow('请先设置昵称', { state: 'alert' }); return; }
+      const content = document.getElementById('feedPostInput').value.trim();
+      if (!content) return;
+      document.getElementById('feedPostInput').value = '';
+      await socialApi('POST', '/api/social/feed', {
+        deviceId: SOCIAL_DEVICE_ID,
+        nickname: socialProfile.nickname,
+        avatar: socialProfile.avatar,
+        content
+      });
+      refreshFeed();
+    }
+
+    async function refreshFeed() {
+      const res = await socialApi('GET', '/api/social/feed');
+      if (!res.ok || !res.posts) return;
+      feedPosts = res.posts;
+      renderFeed();
+    }
+
+    function renderFeed() {
+      const el = document.getElementById('feedList');
+      if (feedPosts.length === 0) {
+        el.innerHTML = '<div style="text-align:center;color:#9a7f91;font-size:12px;padding:20px;">晾晒圈空空的，发点什么吧！</div>';
+        return;
+      }
+      el.innerHTML = feedPosts.map(p => {
+        const comments = (p.comments || []).map(c =>
+          `<div class="feed-comment"><b>${escHtml(c.nickname)}</b>：${escHtml(c.content)}</div>`
+        ).join('');
+        return `
+          <div class="feed-post">
+            <div class="feed-post-header">
+              <span>${escHtml(p.avatar)} <b>${escHtml(p.nickname)}</b></span>
+              <span style="margin-left:auto;font-size:10px;color:#b08ca0;">${formatTime(p.createdAt)}</span>
+            </div>
+            <div class="feed-post-content">${escHtml(p.content)}</div>
+            <div class="feed-post-actions">
+              <button onclick="likeFeedPost('${p.id}')">♡ ${p.likes || 0}</button>
+              <button onclick="toggleCommentInput('${p.id}')">💬 ${(p.comments || []).length}</button>
+            </div>
+            ${comments}
+            <div class="feed-comment-input" id="commentInput-${p.id}" style="display:none;">
+              <input type="text" id="commentText-${p.id}" placeholder="评论..." maxlength="100" />
+              <button onclick="submitComment('${p.id}')">发送</button>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    async function likeFeedPost(postId) {
+      await socialApi('POST', '/api/social/feed/' + postId + '/like', { deviceId: SOCIAL_DEVICE_ID });
+      refreshFeed();
+    }
+
+    function toggleCommentInput(postId) {
+      const el = document.getElementById('commentInput-' + postId);
+      el.style.display = el.style.display === 'none' ? 'flex' : 'none';
+      if (el.style.display === 'flex') {
+        document.getElementById('commentText-' + postId).focus();
+      }
+    }
+
+    async function submitComment(postId) {
+      if (!socialProfile) { speakAndShow('请先设置昵称', { state: 'alert' }); return; }
+      const input = document.getElementById('commentText-' + postId);
+      const content = input.value.trim();
+      if (!content) return;
+      input.value = '';
+      await socialApi('POST', '/api/social/feed/' + postId + '/comment', {
+        deviceId: SOCIAL_DEVICE_ID,
+        nickname: socialProfile.nickname,
+        content
+      });
+      refreshFeed();
+    }
+
+    // ─── 好友列表 ───
+    async function refreshFriends() {
+      const res = await socialApi('GET', '/api/social/friends?deviceId=' + SOCIAL_DEVICE_ID);
+      if (!res.ok || !res.friends) return;
+      socialFriends = res.friends;
+      const el = document.getElementById('friendList');
+      if (socialFriends.length === 0) {
+        el.innerHTML = '<div style="text-align:center;color:#9a7f91;font-size:12px;padding:20px;">还没有好友，去碰一碰认识新朋友吧！</div>';
+        return;
+      }
+      el.innerHTML = socialFriends.map(f => `
+        <div class="friend-row" onclick="openFriendChat('${escHtml(f.friendId)}','${escHtml(f.friendName)}','${escHtml(f.friendAvatar)}')">
+          <span class="friend-avatar">${escHtml(f.friendAvatar)}</span>
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:500;">${escHtml(f.friendName)}</div>
+          </div>
+          <span style="font-size:11px;color:#b08ca0;">›</span>
+        </div>
+      `).join('');
+    }
+
+    function openFriendChat(friendId, friendName, friendAvatar) {
+      socialChatTarget = { friendId, friendName, friendAvatar };
+      document.getElementById('friendList').style.display = 'none';
+      document.getElementById('friendChatBox').style.display = 'block';
+      document.getElementById('friendChatName').textContent = friendAvatar + ' ' + friendName;
+      refreshFriendMessages();
+    }
+
+    function closeFriendChat() {
+      socialChatTarget = null;
+      document.getElementById('friendList').style.display = 'block';
+      document.getElementById('friendChatBox').style.display = 'none';
+    }
+
+    async function refreshFriendMessages() {
+      if (!socialChatTarget) return;
+      const res = await socialApi('GET', '/api/social/messages?from=' + SOCIAL_DEVICE_ID + '&to=' + socialChatTarget.friendId);
+      const el = document.getElementById('friendChatMessages');
+      if (!res.ok || !res.messages || res.messages.length === 0) {
+        el.innerHTML = '<div style="text-align:center;color:#9a7f91;font-size:11px;padding:12px;">开始聊天吧！</div>';
+        return;
+      }
+      el.innerHTML = res.messages.map(m => {
+        const isMe = m.fromDeviceId === SOCIAL_DEVICE_ID;
+        return `<div style="text-align:${isMe ? 'right' : 'left'};margin:3px 0;">
+          <span style="display:inline-block;padding:5px 10px;border-radius:12px;font-size:12px;max-width:70%;
+            ${isMe ? 'background:linear-gradient(135deg,#ff8fc1,#9b7bea);color:#fff;' : 'background:rgba(255,255,255,.8);border:1px solid rgba(255,166,205,.26);'}">${escHtml(m.content)}</span>
+        </div>`;
+      }).join('');
+      el.scrollTop = el.scrollHeight;
+    }
+
+    async function sendFriendMsg() {
+      if (!socialChatTarget || !socialProfile) return;
+      const input = document.getElementById('friendChatInput');
+      const content = input.value.trim();
+      if (!content) return;
+      input.value = '';
+      await socialApi('POST', '/api/social/messages', {
+        fromDeviceId: SOCIAL_DEVICE_ID,
+        fromName: socialProfile.nickname,
+        toDeviceId: socialChatTarget.friendId,
+        content
+      });
+      refreshFriendMessages();
+    }
+
+    // 定时刷新广场消息
+    setInterval(() => {
+      if (document.getElementById('socialPanel').classList.contains('active')) {
+        const activeTab = document.querySelector('.social-tab.active');
+        if (activeTab && activeTab.id === 'socialTabNearby') refreshNearbyMessages();
+        if (activeTab && activeTab.id === 'socialTabFeed') refreshFeed();
+      }
+    }, 30000);
+
+window.AuraDeskAvatar = {
       setAvatarState,
       showBubble,
       hideBubble,
@@ -1136,8 +5870,71 @@
       nextAvatarTheme,
       closeInterface,
       openInterface,
+      toggleMobilePanel,
+      refreshRemindersFromDesktop,
+      createDesktopReminder,
       getVoiceSettings: () => ({ ...voiceSettings })
     };
   </script>
+
+  <!-- 自定义提醒弹窗 -->
+  <div class="reminder-modal" id="reminderModal">
+    <div class="reminder-modal-content">
+      <div class="reminder-modal-title">✨ 新建提醒</div>
+      <div class="reminder-form-group">
+        <label>提醒标题</label>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <input type="text" id="modalReminderTitle" placeholder="例如：下午3点开会" style="flex: 1;" />
+          <button class="voice-input-btn" id="voiceInputBtn" onclick="toggleVoiceInput()" title="语音输入">
+            🎤
+          </button>
+        </div>
+      </div>
+      <div class="reminder-form-row">
+        <div class="reminder-form-group">
+          <label>提醒时间</label>
+          <input type="datetime-local" id="modalReminderTime" />
+        </div>
+        <div class="reminder-form-group">
+          <label>提醒类型</label>
+          <select id="modalReminderType">
+            <option value="日程">📅 日程</option>
+            <option value="会议">👥 会议</option>
+            <option value="用药">💊 用药提醒</option>
+            <option value="抢票">🎫 抢票</option>
+            <option value="快递">📦 快递</option>
+            <option value="闹钟">⏰ 闹钟</option>
+            <option value="其他">📝 其他</option>
+          </select>
+        </div>
+      </div>
+      <div class="reminder-form-group">
+        <label>备注（可选）</label>
+        <input type="text" id="modalReminderNote" placeholder="添加备注..." />
+      </div>
+      <div class="reminder-modal-actions">
+        <button class="btn-cancel" onclick="closeReminderModal()">取消</button>
+        <button class="btn-save" onclick="saveReminderFromModal()">保存提醒</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- API Key 设置弹窗 -->
+  <div class="reminder-modal" id="apiKeyModal">
+    <div class="reminder-modal-content">
+      <div class="reminder-modal-title">🔑 设置 DeepSeek API Key</div>
+      <div class="reminder-form-group">
+        <label>API Key</label>
+        <input type="password" id="apiKeyInput" placeholder="sk-..." />
+      </div>
+      <div style="font-size: 12px; color: #9a7f91; margin-bottom: 12px;">
+        在 <a href="https://platform.deepseek.com" style="color: #ff8fc1;">platform.deepseek.com</a> 获取 API Key
+      </div>
+      <div class="reminder-modal-actions">
+        <button class="btn-cancel" onclick="closeApiKeyModal()">取消</button>
+        <button class="btn-save" onclick="saveApiKey()">保存</button>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
